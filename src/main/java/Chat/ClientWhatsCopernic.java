@@ -9,7 +9,7 @@ public class ClientWhatsCopernic {
     public static Scanner sc = new Scanner(System.in);
 
     public static void main(String[] args) throws IOException {
-        System.out.println("¡¡Bienvenido a WhatsCopernic!!");
+        System.out.println("¡¡Bienvenido a WhatsCopernic!! ");
 
         boolean salir = false;
         while (!salir) {
