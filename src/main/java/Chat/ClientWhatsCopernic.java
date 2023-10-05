@@ -11,25 +11,27 @@ public class ClientWhatsCopernic {
     public static void main(String[] args) throws IOException {
         System.out.println("¡¡Bienvenido a WhatsCopernic!! ");
 
-        System.out.println("1. Iniciar Sesión");
-
-
-
-        // Prueba
-
-
-
-
-
-
-
         boolean salir = false;
         while (!salir) {
             salir = iniciarApp();
         }
 
+        System.out.println("Bienvenido a WhatsCopernic");
+        System.out.println("");
+        System.out.println("Menú de opciones");
+        System.out.println("1. Listar usuarios");
+        System.out.println("2. Enviar mensaje");
+        System.out.println("3. Recibir mensaje");
+        System.out.println("4. Enviar archivo");
+        System.out.println("5. Ver archivos");
+        System.out.println("6. Recibir archivo");
+        System.out.println("7. Crear grupo");
+        System.out.println("8. Gestionar grupo");
+        System.out.println("9. Eliminar grupo");
+        System.out.println("10. Configuración");
+        System.out.println("11. Salir");
 
-        System.out.println("Saliendo del programa...");
+
     }
 
     public static boolean iniciarApp() throws IOException {
