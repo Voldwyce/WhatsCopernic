@@ -2,25 +2,55 @@ package Chat;
 
 import java.io.*;
 import java.net.*;
+import java.util.Scanner;
+
 public class ClientWhatsCopernic {
+
+    public static Scanner sc = new Scanner(System.in);
+
     public static void main(String[] args) throws IOException {
+        System.out.println("Bienvenido a WhatsCopernic!! ");
 
-        // Crea un socket de servidor
-        ServerSocket serverSocket = new ServerSocket(42069);
-        System.out.println("Conexion con WhatsCopernic.... Realizada!!");
+        boolean salir = false;
+        while (!salir) {
+            salir = iniciarApp();
+        }
+    }
 
-        while (true) {
+    public static boolean iniciarApp() throws IOException {
+        // Mostrar opciones al usuario
+        System.out.println("1. Iniciar Sesión");
+        System.out.println("2. Crear Cuenta");
+        System.out.print("Elija una opción: ");
+        int opcion = sc.nextInt();
+        sc.nextLine();
 
-            // Acepta la conexión del usuario
-            Socket clientSocket = serverSocket.accept();
-            System.out.println("Client connected: " + clientSocket.getInetAddress());
+        System.out.print("Usuario: ");
+        String usuario = sc.nextLine();
+        System.out.print("Contraseña: ");
+        String password = sc.nextLine();
 
-            // Mensaje de bienvenida
-            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            String message = in.readLine();
-            System.out.println("Client says: " + message);
+        Socket sk = new Socket("localhost", 42069);
 
+        PrintWriter out = new PrintWriter(sk.getOutputStream(), true);
+        BufferedReader in = new BufferedReader(new InputStreamReader(sk.getInputStream()));
+
+        if (opcion == 1) {
+            out.println("login " + usuario + " " + password);
+        } else if (opcion == 2) {
+            out.println("create " + usuario + " " + password);
+        } else {
+            System.out.println("Opción inválida");
+            return false;
         }
 
+        String respuesta = in.readLine();
+        if (respuesta.equals("true")) {
+            System.out.println("Operación exitosa. Saliendo del bucle.");
+            return true;
+        } else {
+            System.out.println("Credenciales incorrectas o error al crear la cuenta.");
+            return false;
+        }
     }
 }
