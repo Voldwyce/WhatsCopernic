@@ -11,6 +11,18 @@ public class ClientWhatsCopernic {
     public static void main(String[] args) throws IOException {
         System.out.println("Bienvenido a WhatsCopernic!! ");
 
+        System.out.println("1. Iniciar Sesión");
+
+
+
+
+
+
+
+
+
+
+
         boolean salir = false;
         while (!salir) {
             salir = iniciarApp();
