@@ -9,7 +9,7 @@ public class ClientWhatsCopernic {
     public static Scanner sc = new Scanner(System.in);
 
     public static void main(String[] args) throws IOException {
-        System.out.println("Bienvenido a WhatsCopernic!! ");
+        System.out.println("¡¡Bienvenido a WhatsCopernic!! ");
 
         System.out.println("1. Iniciar Sesión");
 
@@ -27,6 +27,9 @@ public class ClientWhatsCopernic {
         while (!salir) {
             salir = iniciarApp();
         }
+
+
+        System.out.println("Saliendo del programa...");
     }
 
     public static boolean iniciarApp() throws IOException {
