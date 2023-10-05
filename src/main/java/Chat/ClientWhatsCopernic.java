@@ -15,6 +15,9 @@ public class ClientWhatsCopernic {
         while (!salir) {
             salir = iniciarApp();
         }
+
+
+        System.out.println("Saliendo del programa...");
     }
 
     public static boolean iniciarApp() throws IOException {
