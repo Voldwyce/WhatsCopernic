@@ -4,14 +4,11 @@ import java.io.*;
 import java.net.*;
 import java.sql.*;
 import java.util.HashMap;
-import java.util.Scanner;
 
 public class ServerWhatsCopernic {
-    public static Scanner sc = new Scanner(System.in);
     public static Connection cn;
 
     public static void main(String[] args) throws IOException {
-
         // Crear un mapa para almacenar los IDs de los clientes y sus nombres de usuario correspondientes
         HashMap<Integer, String> clients = new HashMap<>();
         int nextClientId = 1;
@@ -91,15 +88,14 @@ public class ServerWhatsCopernic {
         @Override
         public void run() {
             try {
-                // Mensaje de bienvenida
                 PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-
                 BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 String clientMessage;
+
                 while ((clientMessage = in.readLine()) != null) {
                     System.out.println("Cliente " + clientId + " dice: " + clientMessage);
-
                     String[] partes = clientMessage.split(" ");
+
                     if (partes.length < 3) {
                         out.println("Comando inválido");
                     } else {
@@ -123,20 +119,38 @@ public class ServerWhatsCopernic {
                                     out.println("Error al crear la cuenta");
                                 }
                                 break;
+                            case "listar":
+                                String userList = listarUsuarios(clients);
+                                out.println(userList);
+                                break;
+                            case "logout":
+                                out.println("true");
+                                clients.remove(clientId);
+                                clientSocket.close();
+                                return;
                             default:
                                 out.println("Comando inválido");
                                 break;
                         }
                     }
                 }
-
-                // Logout
-                System.out.println("Usuario " + clientId + " desconectado.");
-                clientSocket.close();
-                clients.remove(clientId);
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
         }
+
+        private String listarUsuarios(HashMap<Integer, String> clients) {
+            StringBuilder userList = new StringBuilder("Usuarios conectados: ");
+            for (String username : clients.values()) {
+                if (username != null) {
+                    userList.append(username).append(", ");
+                } else {
+                    userList.append("null, ");
+                }
+            }
+            return userList.toString();
+        }
+
     }
 }

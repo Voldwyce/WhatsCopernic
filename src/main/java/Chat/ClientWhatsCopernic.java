@@ -5,13 +5,13 @@ import java.net.*;
 import java.util.Scanner;
 
 public class ClientWhatsCopernic {
-
     public static Scanner sc = new Scanner(System.in);
+    public static Socket sk;
 
     public static void main(String[] args) throws IOException {
         System.out.println("¡¡Bienvenido a WhatsCopernic!! ");
-
         boolean salir = false;
+
         while (!salir) {
             salir = iniciarApp();
         }
@@ -31,11 +31,24 @@ public class ClientWhatsCopernic {
         System.out.println("10. Configuración");
         System.out.println("11. Salir");
 
+        System.out.print("Elija una opción: ");
+        int opcion = sc.nextInt();
+        sc.nextLine();
 
+        switch (opcion) {
+            case 1:
+                listarUsuarios();
+                break;
+            case 11:
+                logout();
+                break;
+            default:
+                System.out.println("Opción inválida");
+                break;
+        }
     }
 
     public static boolean iniciarApp() throws IOException {
-        // Mostrar opciones al usuario
         System.out.println("1. Iniciar Sesión");
         System.out.println("2. Crear Cuenta");
         System.out.print("Elija una opción: ");
@@ -47,7 +60,7 @@ public class ClientWhatsCopernic {
         System.out.print("Contraseña: ");
         String password = sc.nextLine();
 
-        Socket sk = new Socket("localhost", 42069);
+        sk = new Socket("localhost", 42069);
 
         PrintWriter out = new PrintWriter(sk.getOutputStream(), true);
         BufferedReader in = new BufferedReader(new InputStreamReader(sk.getInputStream()));
@@ -68,6 +81,33 @@ public class ClientWhatsCopernic {
         } else {
             System.out.println("Credenciales incorrectas o error al crear la cuenta.");
             return false;
+        }
+    }
+
+    public static void listarUsuarios() {
+        try {
+            PrintWriter out = new PrintWriter(sk.getOutputStream(), true);
+            BufferedReader in = new BufferedReader(new InputStreamReader(sk.getInputStream()));
+
+            out.println("listar");
+
+            String userList = in.readLine();
+            String[] usernames = userList.split(", ");
+            System.out.println("Usuarios conectados: " + String.join(", ", usernames));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public static void logout() {
+        try {
+            PrintWriter out = new PrintWriter(sk.getOutputStream(), true);
+            out.println("logout");
+            sk.close();
+            System.out.println("Cierre de sesión exitoso. Hasta luego.");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
