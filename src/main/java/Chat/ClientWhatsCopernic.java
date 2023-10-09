@@ -17,34 +17,39 @@ public class ClientWhatsCopernic {
         }
 
         System.out.println("Bienvenido a WhatsCopernic");
-        System.out.println("");
-        System.out.println("Menú de opciones");
-        System.out.println("1. Listar usuarios");
-        System.out.println("2. Enviar mensaje");
-        System.out.println("3. Recibir mensaje");
-        System.out.println("4. Enviar archivo");
-        System.out.println("5. Ver archivos");
-        System.out.println("6. Recibir archivo");
-        System.out.println("7. Crear grupo");
-        System.out.println("8. Gestionar grupo");
-        System.out.println("9. Eliminar grupo");
-        System.out.println("10. Configuración");
-        System.out.println("11. Salir");
+        boolean continuar = true;
 
-        System.out.print("Elija una opción: ");
-        int opcion = sc.nextInt();
-        sc.nextLine();
+        while (continuar) {
+            System.out.println("");
+            System.out.println("Menú de opciones");
+            System.out.println("1. Listar usuarios");
+            System.out.println("2. Enviar mensaje");
+            System.out.println("3. Recibir mensaje");
+            System.out.println("4. Enviar archivo");
+            System.out.println("5. Ver archivos");
+            System.out.println("6. Recibir archivo");
+            System.out.println("7. Crear grupo");
+            System.out.println("8. Gestionar grupo");
+            System.out.println("9. Eliminar grupo");
+            System.out.println("10. Configuración");
+            System.out.println("11. Salir");
 
-        switch (opcion) {
-            case 1:
-                listarUsuarios();
-                break;
-            case 11:
-                logout();
-                break;
-            default:
-                System.out.println("Opción inválida");
-                break;
+            System.out.print("Elija una opción: ");
+            int opcion = sc.nextInt();
+            sc.nextLine();
+
+            switch (opcion) {
+                case 1:
+                    listarUsuarios();
+                    break;
+                case 11:
+                    logout();
+                    continuar = false;
+                    break;
+                default:
+                    System.out.println("Opción inválida");
+                    break;
+            }
         }
     }
 
@@ -91,14 +96,25 @@ public class ClientWhatsCopernic {
 
             out.println("listar");
 
-            String userList = in.readLine();
-            String[] usernames = userList.split(", ");
-            System.out.println("Usuarios conectados: " + String.join(", ", usernames));
+            BufferedReader respuesta = new BufferedReader(new InputStreamReader(sk.getInputStream()));
+
+            String userList = respuesta.readLine();
+
+            if (userList.equals("Comando incorrecto")) {
+                System.out.println(userList);
+            } else {
+                String[] usernames = userList.split(", ");
+                System.out.println("Usuarios conectados: ");
+                for (String username : usernames) {
+                    if (!username.equals("null")) {
+                        System.out.println(username);
+                    }
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
 
     public static void logout() {
         try {
