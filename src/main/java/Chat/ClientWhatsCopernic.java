@@ -81,7 +81,7 @@ public class ClientWhatsCopernic {
 
         String respuesta = in.readLine();
         if (respuesta.equals("true")) {
-            System.out.println("Operación exitosa. Saliendo del bucle.");
+            System.out.println("Session iniciada.");
             return true;
         } else {
             System.out.println("Credenciales incorrectas o error al crear la cuenta.");
