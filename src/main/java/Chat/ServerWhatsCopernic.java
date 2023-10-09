@@ -58,16 +58,16 @@ public class ServerWhatsCopernic {
                 while ((clientMessage = in.readLine()) != null) {
                     System.out.println("Cliente " + clientId + " dice: " + clientMessage);
 
-                    String comando = clientMessage.split(" ")[0]; // Solo obtenemos el primer elemento para identificar el comando
+                    String[] parts = clientMessage.split(" ");
+                    String command = parts[0];
 
-                    switch (comando) {
+                    switch (command) {
                         case "login":
-                            if (clientMessage.length() < 3) {
+                            if (parts.length < 3) {
                                 out.println("Comando incorrecto");
                             } else {
-                                String[] partes = clientMessage.split(" ");
-                                String usuario = partes[1];
-                                String pwd = partes[2];
+                                String usuario = parts[1];
+                                String pwd = parts[2];
                                 if (iniciarSesion(usuario, pwd)) {
                                     clients.put(clientId, usuario);
                                     out.println("true");
@@ -77,12 +77,11 @@ public class ServerWhatsCopernic {
                             }
                             break;
                         case "create":
-                            if (clientMessage.length() < 3) {
+                            if (parts.length < 3) {
                                 out.println("Comando incorrecto");
                             } else {
-                                String[] partes = clientMessage.split(" ");
-                                String usuario = partes[1];
-                                String pwd = partes[2];
+                                String usuario = parts[1];
+                                String pwd = parts[2];
                                 if (crearCuenta(usuario, pwd)) {
                                     out.println("true");
                                     out.println("Cuenta creada, inicie sesión");
@@ -95,6 +94,15 @@ public class ServerWhatsCopernic {
                         case "listar":
                             String userList = listarUsuarios(clients);
                             out.println(userList);
+                            break;
+                        case "mensaje":
+                            if (parts.length < 3) {
+                                out.println("Comando incorrecto");
+                            } else {
+                                String destinoUsuario = parts[1];
+                                String mensaje = clientMessage.substring(command.length() + destinoUsuario.length() + 2);
+                                enviarMensaje(clientId, destinoUsuario, mensaje, clients);
+                            }
                             break;
                         case "logout":
                             out.println("true");
@@ -163,6 +171,11 @@ public class ServerWhatsCopernic {
                 e.printStackTrace();
             }
             return userList.toString();
+        }
+
+        // Implementa la lógica para enviar mensajes a otros usuarios aquí
+        public static void enviarMensaje(int remitenteId, String destinoUsuario, String mensaje, HashMap<Integer, String> clients) {
+            // Implementa esta función según tus necesidades específicas
         }
     }
 }

@@ -42,6 +42,9 @@ public class ClientWhatsCopernic {
                 case 1:
                     listarUsuarios();
                     break;
+                case 2:
+                    enviarMensaje();
+                    break;
                 case 11:
                     logout();
                     continuar = false;
@@ -92,12 +95,9 @@ public class ClientWhatsCopernic {
     public static void listarUsuarios() {
         try {
             PrintWriter out = new PrintWriter(sk.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(new InputStreamReader(sk.getInputStream()));
-
             out.println("listar");
 
             BufferedReader respuesta = new BufferedReader(new InputStreamReader(sk.getInputStream()));
-
             String userList = respuesta.readLine();
 
             if (userList.equals("Comando incorrecto")) {
@@ -111,6 +111,20 @@ public class ClientWhatsCopernic {
                     }
                 }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void enviarMensaje() {
+        try {
+            PrintWriter out = new PrintWriter(sk.getOutputStream(), true);
+            sc.nextLine(); // Consume newline
+            System.out.print("Ingrese el nombre de usuario del destinatario: ");
+            String destinatario = sc.nextLine();
+            System.out.print("Ingrese el mensaje: ");
+            String mensaje = sc.nextLine();
+            out.println("mensaje " + destinatario + " " + mensaje);
         } catch (IOException e) {
             e.printStackTrace();
         }
