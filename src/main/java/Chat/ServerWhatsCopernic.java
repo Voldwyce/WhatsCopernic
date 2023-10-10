@@ -134,9 +134,6 @@ public class ServerWhatsCopernic {
                                 }
                             }
                             break;
-                        case "recibir":
-                            recibirMensajes(clientId);
-                            break;
                         case "listar":
                             String userList = listarUsuarios(clients);
                             out.writeUTF(userList);
@@ -231,36 +228,6 @@ public class ServerWhatsCopernic {
                 return false;
             }
         }
-
-        public static void recibirMensajes(int usuarioId) {
-            try {
-                String query = "SELECT id_usuario_in, mensaje FROM mensajes WHERE id_usuario_out = ? ORDER BY id_mensaje";
-                PreparedStatement preparedStatement = cn.prepareStatement(query);
-                preparedStatement.setInt(1, usuarioId);
-                ResultSet resultSet = preparedStatement.executeQuery();
-
-                HashMap<Integer, StringBuilder> mensajesPorRemitente = new HashMap<>();
-
-                while (resultSet.next()) {
-                    int remitenteId = resultSet.getInt("id_usuario_in");
-                    String mensaje = resultSet.getString("mensaje");
-
-                    if (!mensajesPorRemitente.containsKey(remitenteId)) {
-                        mensajesPorRemitente.put(remitenteId, new StringBuilder());
-                    }
-
-                    mensajesPorRemitente.get(remitenteId).append(mensaje).append("\n");
-                }
-
-                for (Integer remitenteId : mensajesPorRemitente.keySet()) {
-                    String mensajes = mensajesPorRemitente.get(remitenteId).toString();
-                    System.out.println("Mensajes del remitente " + remitenteId + ":\n" + mensajes);
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-
     }
 }
 
