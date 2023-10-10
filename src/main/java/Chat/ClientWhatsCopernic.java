@@ -46,6 +46,9 @@ public class ClientWhatsCopernic {
                     case 2:
                         enviarMensaje();
                         break;
+                    case 3:
+                        recibirMensaje();
+                        break;
                     case 11:
                         logout();
                         continuar = false;
@@ -140,6 +143,31 @@ public class ClientWhatsCopernic {
         }
     }
 
+    public static void recibirMensaje() {
+        try {
+            out.writeUTF("recibir");
+            /*String response = in.readUTF();
+
+            if (response.equals("Comando incorrecto")) {
+                System.out.println("Error al recibir mensajes");
+            } else {
+                String[] mensajes = response.split(", ");
+                for (String mensaje : mensajes) {
+                    if (!mensaje.equals("null")) {
+                        System.out.println(mensaje);
+                    }
+                }
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }*/
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
 
     public static void logout() {
         try {
