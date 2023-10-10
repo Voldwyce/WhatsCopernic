@@ -7,8 +7,8 @@ import java.util.Scanner;
 public class ClientWhatsCopernic {
     public static Scanner sc = new Scanner(System.in);
     public static Socket sk;
-    public static DataInputStream in;
-    public static DataOutputStream out;
+    public static DataInputStream in; // DataInputStream para lectura
+    public static DataOutputStream out; // DataOutputStream para escritura
 
     public static void main(String[] args) throws IOException {
         System.out.println("¡¡Bienvenido a WhatsCopernic!! ");
@@ -22,7 +22,6 @@ public class ClientWhatsCopernic {
         boolean continuar = true;
 
         while (continuar) {
-                System.out.println("");
                 System.out.println("Menú de opciones");
                 System.out.println("1. Listar usuarios");
                 System.out.println("2. Enviar mensaje");
@@ -44,8 +43,8 @@ public class ClientWhatsCopernic {
                     case 1:
                         listarUsuarios();
                         break;
-                    case 7:
-                        crearGrupo();
+                    case 2:
+                        enviarMensaje();
                         break;
                     case 11:
                         logout();
@@ -57,23 +56,6 @@ public class ClientWhatsCopernic {
                 }
             }
         }
-
-    private static void crearGrupo() {
-        try {
-            System.out.print("Nombre del grupo: ");
-            String nombreGrupo = sc.nextLine();
-            out.writeUTF("creargrupo " + nombreGrupo);
-            String response = in.readUTF();
-            if (response.equals("true")) {
-                System.out.println("Grupo creado con éxito");
-            } else {
-                System.out.println("Error al crear el grupo");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     public static boolean iniciarApp() {
         try {
 
@@ -136,6 +118,23 @@ public class ClientWhatsCopernic {
                     e.printStackTrace();
                 }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void enviarMensaje() {
+        try {
+            System.out.print("Ingrese el nombre del destinatario: ");
+            String destinatario = sc.nextLine();
+            System.out.print("Ingrese el mensaje: ");
+            String mensaje = sc.nextLine();
+
+            out.writeUTF("mensaje " + destinatario + " " + mensaje);
+
+            String respuestaServidor = in.readUTF();
+            System.out.println(respuestaServidor);
+
         } catch (IOException e) {
             e.printStackTrace();
         }
