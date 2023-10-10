@@ -121,6 +121,43 @@ public class ServerWhatsCopernic {
                                 }
                             }
                             break;
+                        case "creargrupo":
+                            if (partes.length < 2) {
+                                out.writeUTF("Comando incorrecto");
+                            } else {
+                                String grupo = partes[1];
+                                String query = "INSERT INTO grupos (grp_nombre) VALUES (?)";
+                                PreparedStatement preparedStatement = cn.prepareStatement(query);
+                                preparedStatement.setString(1, grupo);
+                                int rowCount = preparedStatement.executeUpdate();
+                                if (rowCount > 0) {
+                                    String queryIdGrp = "SELECT id_grupo FROM grupos WHERE grp_nombre = ?";
+                                    PreparedStatement preparedStatementIdGrp = cn.prepareStatement(queryIdGrp);
+                                    preparedStatementIdGrp.setString(1, grupo);
+                                    ResultSet resultSetIdGrp = preparedStatementIdGrp.executeQuery();
+
+                                    int idGrupo = 0; // Variable para almacenar el id del grupo
+
+                                    if (resultSetIdGrp.next()) {
+                                        idGrupo = resultSetIdGrp.getInt("id_grupo");
+                                    }
+
+                                    String query2 = "INSERT INTO grp_usuarios (id_usuario, id_grupo, grp_permisos) VALUES (?, ?, ?)";
+                                    PreparedStatement preparedStatement2 = cn.prepareStatement(query2);
+                                    preparedStatement2.setInt(1, clientId);
+                                    preparedStatement2.setInt(2, idGrupo);
+                                    preparedStatement2.setInt(3, 1); // Si 'grp_permisos' es un int, no necesita comillas
+
+                                    preparedStatement2.executeUpdate(); // Ejecutar la inserción
+
+                                    out.writeUTF("true"); // Grupo creado con éxito
+
+
+                                } else {
+                                    out.writeUTF("Error al crear el grupo"); // Error al crear el grupo
+                                }
+                            }
+                            break;
                         case "listar":
                             String userList = listarUsuarios(clients);
                             out.writeUTF(userList);
@@ -135,7 +172,7 @@ public class ServerWhatsCopernic {
                             break;
                     }
                 }
-            } catch (IOException e) {
+            } catch (IOException | SQLException e) {
                 e.printStackTrace();
             }
         }

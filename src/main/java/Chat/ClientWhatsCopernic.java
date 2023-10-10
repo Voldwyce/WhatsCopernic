@@ -22,6 +22,7 @@ public class ClientWhatsCopernic {
         boolean continuar = true;
 
         while (continuar) {
+                System.out.println("");
                 System.out.println("Menú de opciones");
                 System.out.println("1. Listar usuarios");
                 System.out.println("2. Enviar mensaje");
@@ -43,6 +44,9 @@ public class ClientWhatsCopernic {
                     case 1:
                         listarUsuarios();
                         break;
+                    case 7:
+                        crearGrupo();
+                        break;
                     case 11:
                         logout();
                         continuar = false;
@@ -53,6 +57,23 @@ public class ClientWhatsCopernic {
                 }
             }
         }
+
+    private static void crearGrupo() {
+        try {
+            System.out.print("Nombre del grupo: ");
+            String nombreGrupo = sc.nextLine();
+            out.writeUTF("creargrupo " + nombreGrupo);
+            String response = in.readUTF();
+            if (response.equals("true")) {
+                System.out.println("Grupo creado con éxito");
+            } else {
+                System.out.println("Error al crear el grupo");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static boolean iniciarApp() {
         try {
 
