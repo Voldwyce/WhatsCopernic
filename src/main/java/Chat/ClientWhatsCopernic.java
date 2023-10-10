@@ -15,7 +15,6 @@ public class ClientWhatsCopernic {
         boolean salir = false;
 
         while (!salir) {
-            sk = new Socket("localhost", 42069);
             salir = iniciarApp();
         }
 
@@ -23,7 +22,6 @@ public class ClientWhatsCopernic {
         boolean continuar = true;
 
         while (continuar) {
-                System.out.println("");
                 System.out.println("Menú de opciones");
                 System.out.println("1. Listar usuarios");
                 System.out.println("2. Enviar mensaje");
@@ -57,8 +55,7 @@ public class ClientWhatsCopernic {
         }
     public static boolean iniciarApp() {
         try {
-            out = new DataOutputStream(sk.getOutputStream());
-            in = new DataInputStream(sk.getInputStream());
+
 
             System.out.println("1. Iniciar Sesión");
             System.out.println("2. Crear Cuenta");
@@ -70,6 +67,10 @@ public class ClientWhatsCopernic {
             String usuario = sc.nextLine();
             System.out.print("Contraseña: ");
             String password = sc.nextLine();
+
+            sk = new Socket("localhost", 42069);
+            in = new DataInputStream(sk.getInputStream());
+            out = new DataOutputStream(sk.getOutputStream());
 
             if (opcion == 1) {
                 out.writeUTF("login " + usuario + " " + password);
