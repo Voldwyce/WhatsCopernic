@@ -7,8 +7,8 @@ import java.util.Scanner;
 public class ClientWhatsCopernic {
     public static Scanner sc = new Scanner(System.in);
     public static Socket sk;
-    public static DataInputStream in;
-    public static DataOutputStream out;
+    public static DataInputStream in; // DataInputStream para lectura
+    public static DataOutputStream out; // DataOutputStream para escritura
 
     public static void main(String[] args) throws IOException {
         System.out.println("¡¡Bienvenido a WhatsCopernic!! ");
@@ -42,6 +42,9 @@ public class ClientWhatsCopernic {
                 switch (opcion) {
                     case 1:
                         listarUsuarios();
+                        break;
+                    case 2:
+                        enviarMensaje();
                         break;
                     case 11:
                         logout();
@@ -115,6 +118,23 @@ public class ClientWhatsCopernic {
                     e.printStackTrace();
                 }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void enviarMensaje() {
+        try {
+            System.out.print("Ingrese el nombre del destinatario: ");
+            String destinatario = sc.nextLine();
+            System.out.print("Ingrese el mensaje: ");
+            String mensaje = sc.nextLine();
+
+            out.writeUTF("mensaje " + destinatario + " " + mensaje);
+
+            String respuestaServidor = in.readUTF();
+            System.out.println(respuestaServidor);
+
         } catch (IOException e) {
             e.printStackTrace();
         }

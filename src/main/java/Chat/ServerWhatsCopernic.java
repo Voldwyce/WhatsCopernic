@@ -121,6 +121,19 @@ public class ServerWhatsCopernic {
                                 }
                             }
                             break;
+                        case "mensaje":
+                            if (partes.length < 3) {
+                                out.writeUTF("Comando incorrecto");
+                            } else {
+                                String destinoUsuario = partes[1];
+                                String mensaje = clientMessage.substring(comando.length() + destinoUsuario.length() + 2);
+                                if (enviarMensaje(clientId, destinoUsuario, mensaje)) {
+                                    out.writeUTF("Mensaje enviado correctamente a " + destinoUsuario);
+                                } else {
+                                    out.writeUTF("Error al enviar el mensaje");
+                                }
+                            }
+                            break;
                         case "listar":
                             String userList = listarUsuarios(clients);
                             out.writeUTF(userList);
@@ -188,5 +201,33 @@ public class ServerWhatsCopernic {
 
             return userList.toString();
         }
+
+        public static boolean enviarMensaje(int remitenteId, String destinoUsuario, String mensaje) {
+            try {
+                String query = "SELECT id_usuario FROM usuarios WHERE username = ?";
+                PreparedStatement preparedStatement = cn.prepareStatement(query);
+                preparedStatement.setString(1, destinoUsuario);
+                ResultSet resultSet = preparedStatement.executeQuery();
+
+                if (resultSet.next()) {
+                    int idDestinatario = resultSet.getInt("id_usuario");
+
+                    String insertSql = "INSERT INTO mensajes (id_usuario_in, mensaje, id_usuario_out) VALUES (?, ?, ?)";
+                    PreparedStatement insertStatement = cn.prepareStatement(insertSql);
+                    insertStatement.setInt(1, remitenteId);
+                    insertStatement.setString(2, mensaje);
+                    insertStatement.setInt(3, idDestinatario);
+
+                    int rowCount = insertStatement.executeUpdate();
+                    return rowCount > 0;
+                } else {
+                    return false;
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
     }
 }
+
