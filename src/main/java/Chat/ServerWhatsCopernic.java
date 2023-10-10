@@ -115,7 +115,6 @@ public class ServerWhatsCopernic {
                                 String hashedPwd = hashPassword(pwd);
                                 if (crearCuenta(usuario, hashedPwd)) {
                                     out.writeUTF("true");
-                                    out.writeUTF("Cuenta creada, inicie sesión");
                                     clients.put(clientId, usuario);
                                 } else {
                                     out.writeUTF("Error al crear la cuenta");

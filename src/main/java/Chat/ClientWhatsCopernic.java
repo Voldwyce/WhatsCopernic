@@ -7,8 +7,8 @@ import java.util.Scanner;
 public class ClientWhatsCopernic {
     public static Scanner sc = new Scanner(System.in);
     public static Socket sk;
-    public static DataInputStream in; // DataInputStream para lectura
-    public static DataOutputStream out; // DataOutputStream para escritura
+    public static DataInputStream in;
+    public static DataOutputStream out;
 
     public static void main(String[] args) throws IOException {
         System.out.println("¡¡Bienvenido a WhatsCopernic!! ");
