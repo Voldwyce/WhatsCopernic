@@ -84,8 +84,6 @@ public class ServerWhatsCopernic {
                                 String pwd = parts[2];
                                 if (crearCuenta(usuario, pwd)) {
                                     out.println("true");
-                                    out.println("Cuenta creada, inicie sesión");
-                                    clients.put(clientId, usuario); // Registrar el usuario
                                 } else {
                                     out.println("Error al crear la cuenta");
                                 }
@@ -162,13 +160,9 @@ public class ServerWhatsCopernic {
             for (String username : clients.values()) {
                 if (username != null) {
                     userList.append(username).append(", ");
+                } else {
+                    userList.append("null, ");
                 }
-            }
-
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
             return userList.toString();
         }
