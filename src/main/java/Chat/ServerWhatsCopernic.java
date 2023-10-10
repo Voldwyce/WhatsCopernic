@@ -4,12 +4,15 @@ import java.io.*;
 import java.net.*;
 import java.sql.*;
 import java.util.HashMap;
+import java.security.MessageDigest;
 
 public class ServerWhatsCopernic {
     public static Connection cn;
+    public static DataInputStream in;
+    public static DataOutputStream out;
 
     public static void main(String[] args) throws IOException {
-        // Crear un mapa para almacenar los IDs de los clientes y sus nombres de usuario correspondientes
+        // Crear un HashMap para guardar los clientes conectados
         HashMap<Integer, String> clients = new HashMap<>();
         int nextClientId = 1;
 
@@ -29,12 +32,31 @@ public class ServerWhatsCopernic {
     }
 
     public static class ClientHandler extends Thread {
+        // Conexión a la base de datos
         static {
             try {
                 Class.forName("com.mysql.cj.jdbc.Driver");
                 cn = DriverManager.getConnection("jdbc:mysql://localhost:3306/whatscopernic", "admin", "Test123!");
             } catch (ClassNotFoundException | SQLException e) {
                 e.printStackTrace();
+            }
+        }
+
+        public static String hashPassword(String password) {
+            // Hashing de la contraseña
+            try {
+                MessageDigest md = MessageDigest.getInstance("SHA-256");
+                byte[] hashBytes = md.digest(password.getBytes());
+
+                StringBuilder hexHash = new StringBuilder();
+                for (byte b : hashBytes) {
+                    hexHash.append(String.format("%02x", b));
+                }
+
+                return hexHash.toString();
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
             }
         }
 
@@ -51,64 +73,66 @@ public class ServerWhatsCopernic {
         @Override
         public void run() {
             try {
-                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                in = new DataInputStream(clientSocket.getInputStream());
+                out = new DataOutputStream(clientSocket.getOutputStream());
                 String clientMessage;
 
-                while ((clientMessage = in.readLine()) != null) {
+                while (true) {
+                    try {
+                        clientMessage = in.readUTF();
+                    } catch (EOFException e) {
+                        break;
+                    }
+
                     System.out.println("Cliente " + clientId + " dice: " + clientMessage);
 
-                    String[] parts = clientMessage.split(" ");
-                    String command = parts[0];
+                    String[] partes = clientMessage.split(" ");
+                    String comando = partes[0];
 
-                    switch (command) {
+                    switch (comando) {
                         case "login":
-                            if (parts.length < 3) {
-                                out.println("Comando incorrecto");
+                            if (partes.length < 3) {
+                                out.writeUTF("Comando incorrecto");
                             } else {
-                                String usuario = parts[1];
-                                String pwd = parts[2];
-                                if (iniciarSesion(usuario, pwd)) {
+                                String usuario = partes[1];
+                                String pwd = partes[2];
+                                String hashedPwd = hashPassword(pwd);
+
+                                if (iniciarSesion(usuario, hashedPwd)) {
+                                    out.writeUTF("true");
                                     clients.put(clientId, usuario);
-                                    out.println("true");
                                 } else {
-                                    out.println("Credenciales incorrectas");
+                                    out.writeUTF("Credenciales incorrectas");
                                 }
                             }
                             break;
                         case "create":
-                            if (parts.length < 3) {
-                                out.println("Comando incorrecto");
+                            if (partes.length < 3) {
+                                out.writeUTF("Comando incorrecto");
                             } else {
-                                String usuario = parts[1];
-                                String pwd = parts[2];
-                                if (crearCuenta(usuario, pwd)) {
-                                    out.println("true");
+                                String usuario = partes[1];
+                                String pwd = partes[2];
+                                String hashedPwd = hashPassword(pwd);
+                                if (crearCuenta(usuario, hashedPwd)) {
+                                    out.writeUTF("true");
+                                    out.writeUTF("Cuenta creada, inicie sesión");
+                                    clients.put(clientId, usuario);
                                 } else {
-                                    out.println("Error al crear la cuenta");
+                                    out.writeUTF("Error al crear la cuenta");
                                 }
                             }
                             break;
                         case "listar":
                             String userList = listarUsuarios(clients);
-                            out.println(userList);
-                            break;
-                        case "mensaje":
-                            if (parts.length < 3) {
-                                out.println("Comando incorrecto");
-                            } else {
-                                String destinoUsuario = parts[1];
-                                String mensaje = clientMessage.substring(command.length() + destinoUsuario.length() + 2);
-                                enviarMensaje(clientId, destinoUsuario, mensaje, clients);
-                            }
+                            out.writeUTF(userList);
                             break;
                         case "logout":
-                            out.println("true");
+                            out.writeUTF("true");
                             clients.remove(clientId);
                             clientSocket.close();
                             return;
                         default:
-                            out.println("Comando incorrecto");
+                            out.writeUTF("Comando incorrecto");
                             break;
                     }
                 }
@@ -160,16 +184,10 @@ public class ServerWhatsCopernic {
             for (String username : clients.values()) {
                 if (username != null) {
                     userList.append(username).append(", ");
-                } else {
-                    userList.append("null, ");
                 }
             }
-            return userList.toString();
-        }
 
-        // Implementa la lógica para enviar mensajes a otros usuarios aquí
-        public static void enviarMensaje(int remitenteId, String destinoUsuario, String mensaje, HashMap<Integer, String> clients) {
-            // Implementa esta función según tus necesidades específicas
+            return userList.toString();
         }
     }
 }
