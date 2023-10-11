@@ -3,14 +3,18 @@ package Chat;
 import java.io.*;
 import java.net.*;
 import java.util.Scanner;
+import java.util.Properties;
 
 public class ClientWhatsCopernic {
     public static Scanner sc = new Scanner(System.in);
     public static Socket sk;
     public static DataInputStream in;
     public static DataOutputStream out;
+    public static ClientConfiguration clientConfig;
+
 
     public static void main(String[] args) throws IOException {
+        loadClientConfiguration();
         System.out.println("¡¡Bienvenido a WhatsCopernic!! ");
         boolean salir = false;
 
@@ -22,47 +26,44 @@ public class ClientWhatsCopernic {
         boolean continuar = true;
 
         while (continuar) {
-                System.out.println("");
-                System.out.println("Menú de opciones");
-                System.out.println("1. Listar usuarios");
-                System.out.println("2. Enviar mensaje");
-                System.out.println("3. Recibir mensaje");
-                System.out.println("4. Enviar archivo");
-                System.out.println("5. Ver archivos");
-                System.out.println("6. Recibir archivo");
-                System.out.println("7. Crear grupo");
-                System.out.println("8. Gestionar grupo");
-                System.out.println("9. Eliminar grupo");
-                System.out.println("10. Configuración");
-                System.out.println("11. Salir");
+            System.out.println("");
+            System.out.println("Menú de opciones");
+            System.out.println("1. Listar usuarios");
+            System.out.println("2. Enviar mensaje");
+            System.out.println("3. Recibir mensaje");
+            System.out.println("4. Enviar archivo");
+            System.out.println("5. Ver archivos");
+            System.out.println("6. Recibir archivo");
+            System.out.println("7. Crear grupo");
+            System.out.println("8. Gestionar grupo");
+            System.out.println("9. Eliminar grupo");
+            System.out.println("10. Configuración");
+            System.out.println("11. Salir");
 
-                System.out.print("Elija una opción: ");
-                int opcion = sc.nextInt();
-                sc.nextLine();
+            System.out.print("Elija una opción: ");
+            int opcion = sc.nextInt();
+            sc.nextLine();
 
-                switch (opcion) {
-                    case 1:
-                        listarUsuarios();
-                        break;
-                    case 7:
-                        crearGrupo();
-                        break;
-                    case 8:
-                        gestionarGrupo();
-                        break;
-                    case 9:
-                        eliminarGrupo();
-                        break;
-                    case 11:
-                        logout();
-                        continuar = false;
-                        break;
-                    default:
-                        System.out.println("Opción inválida");
-                        break;
-                }
+            switch (opcion) {
+                case 1:
+                    listarUsuarios();
+                    break;
+                case 2:
+                    enviarMensaje();
+                    break;
+                case 7:
+                    crearGrupo();
+                    break;
+                case 11:
+                    logout();
+                    continuar = false;
+                    break;
+                default:
+                    System.out.println("Opción inválida");
+                    break;
             }
         }
+    }
 
 
     private static void crearGrupo() {
@@ -151,7 +152,7 @@ public class ClientWhatsCopernic {
             System.out.print("Contraseña: ");
             String password = sc.nextLine();
 
-            sk = new Socket("localhost", 42069);
+            sk = new Socket(clientConfig.ipServidor, clientConfig.portServidor);
             in = new DataInputStream(sk.getInputStream());
             out = new DataOutputStream(sk.getOutputStream());
 
@@ -203,8 +204,63 @@ public class ClientWhatsCopernic {
         }
     }
 
+    public static void enviarMensaje() {
+        System.out.println("1. Mensaje a un usuario");
+        System.out.println("2. Mensaje a un grupo");
 
-    public static void logout() {
+        System.out.print("Elija una opción: ");
+        int opcion = sc.nextInt();
+        sc.nextLine();
+        switch (opcion) {
+            case 1:
+                mensajeUsuario();
+                break;
+            case 2:
+                mensajeGrupo();
+                break;
+            default:
+                System.out.println("Opción inválida");
+                break;
+        }
+    }
+
+    public static void mensajeUsuario() {
+        try {
+            System.out.print("Ingrese el nombre del destinatario: ");
+            String destinatario = sc.nextLine();
+            System.out.print("Ingrese el mensaje: ");
+            String mensaje = sc.nextLine();
+
+            out.writeUTF("mensaje " + destinatario + " " + mensaje);
+
+            String respuestaServidor = in.readUTF();
+            System.out.println(respuestaServidor);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void mensajeGrupo() {
+        try {
+            System.out.print("Ingrese el nombre del grupo: ");
+            String destinatario = sc.nextLine();
+            System.out.print("Ingrese el mensaje: ");
+            String mensaje = sc.nextLine();
+
+            out.writeUTF("mensajeGrupo " + destinatario + " " + mensaje);
+
+            String respuestaServidor = in.readUTF();
+            System.out.println(respuestaServidor);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+        public static void logout() {
         try {
             DataOutputStream out = new DataOutputStream(sk.getOutputStream());
             out.writeUTF("logout");
@@ -214,4 +270,30 @@ public class ClientWhatsCopernic {
             e.printStackTrace();
         }
     }
+
+    static class ClientConfiguration {
+        public String nombreCliente;
+        public int tamanoMaximoArchivo;
+        public String ipServidor;
+        public int portServidor;
+
+    }
+
+    private static void loadClientConfiguration() {
+        Properties properties = new Properties();
+        try (FileInputStream fis = new FileInputStream("client.properties")) {
+            properties.load(fis);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Carga las variables del archivo de configuración
+        clientConfig = new ClientConfiguration();
+        clientConfig.nombreCliente = properties.getProperty("nombreCliente");
+        clientConfig.tamanoMaximoArchivo = Integer.parseInt(properties.getProperty("tamanoMaximoArchivo"));
+        clientConfig.ipServidor = properties.getProperty("ipServidor");
+        clientConfig.portServidor = Integer.parseInt(properties.getProperty("portServidor"));
+
+    }
+
 }

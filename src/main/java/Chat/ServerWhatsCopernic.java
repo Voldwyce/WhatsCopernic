@@ -5,29 +5,45 @@ import java.net.*;
 import java.sql.*;
 import java.util.HashMap;
 import java.security.MessageDigest;
+import java.util.Properties;
 
 public class ServerWhatsCopernic {
     public static Connection cn;
     public static DataInputStream in;
     public static DataOutputStream out;
+    public static ServerConfiguration serverConfig;
+
 
     public static void main(String[] args) throws IOException {
+        loadServerConfiguration();
+
         // Crear un HashMap para guardar los clientes conectados
         HashMap<Integer, String> clients = new HashMap<>();
         int nextClientId = 1;
+        int maxConnections = serverConfig.maximoConexiones; // Obtén el límite desde la configuración
 
         ServerSocket serverSocket = new ServerSocket(42069);
         System.out.println("WhatsCopernic está esperando usuarios...");
 
+        // Deja entrar a gente mientras no se supere el maximo del fichero de configuracion
         while (true) {
-            Socket clientSocket = serverSocket.accept();
-            System.out.println("Usuario conectado: " + clientSocket);
+            if (clients.size() < maxConnections) {
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("Usuario conectado: " + clientSocket);
 
-            int clientId = nextClientId++;
-            clients.put(clientId, null);
+                int clientId = nextClientId++;
+                clients.put(clientId, null);
 
-            ClientHandler clientHandler = new ClientHandler(clientId, clientSocket, clients);
-            clientHandler.start();
+                ClientHandler clientHandler = new ClientHandler(clientId, clientSocket, clients);
+                clientHandler.start();
+            } else {
+                System.out.println("Se ha alcanzado el límite de conexiones. Espere a que alguien se desconecte.");
+                try {
+                    Thread.sleep(5000); // Espera 5 segundos antes de volver a comprobar
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -36,7 +52,7 @@ public class ServerWhatsCopernic {
         static {
             try {
                 Class.forName("com.mysql.cj.jdbc.Driver");
-                cn = DriverManager.getConnection("jdbc:mysql://localhost:3306/whatscopernic", "admin", "Test123!");
+                cn = DriverManager.getConnection("jdbc:mysql://localhost:3306/whatscopernic",  serverConfig.userBdp, serverConfig.pwdBdp);
             } catch (ClassNotFoundException | SQLException e) {
                 e.printStackTrace();
             }
@@ -125,104 +141,36 @@ public class ServerWhatsCopernic {
                             String userList = listarUsuarios(clients);
                             out.writeUTF(userList);
                             break;
-                        case "creargrupo":
-                            if (partes.length < 2) {
+                        case "mensaje":
+                            if (partes.length < 3) {
                                 out.writeUTF("Comando incorrecto");
                             } else {
-                                String grupo = partes[1];
-                                String query = "INSERT INTO grupos (grp_nombre) VALUES (?)";
-                                PreparedStatement preparedStatement = cn.prepareStatement(query);
-                                preparedStatement.setString(1, grupo);
-                                int rowCount = preparedStatement.executeUpdate();
-                                if (rowCount > 0) {
-                                    String queryIdGrp = "SELECT id_grupo FROM grupos WHERE grp_nombre = ?";
-                                    PreparedStatement preparedStatementIdGrp = cn.prepareStatement(queryIdGrp);
-                                    preparedStatementIdGrp.setString(1, grupo);
-                                    ResultSet resultSetIdGrp = preparedStatementIdGrp.executeQuery();
-
-                                    int idGrupo = 0; // Variable para almacenar el id del grupo
-
-                                    if (resultSetIdGrp.next()) {
-                                        idGrupo = resultSetIdGrp.getInt("id_grupo");
-                                    }
-
-                                    String query2 = "INSERT INTO grp_usuarios (id_usuario, id_grupo, grp_permisos) VALUES (?, ?, ?)";
-                                    PreparedStatement preparedStatement2 = cn.prepareStatement(query2);
-                                    preparedStatement2.setInt(1, clientId);
-                                    preparedStatement2.setInt(2, idGrupo);
-                                    preparedStatement2.setInt(3, 1); // Si 'grp_permisos' es un int, no necesita comillas
-
-                                    preparedStatement2.executeUpdate(); // Ejecutar la inserción
-
-                                    out.writeUTF("true"); // Grupo creado con éxito
-
-
+                                String destinoUsuario = partes[1];
+                                String mensaje = clientMessage.substring(comando.length() + destinoUsuario.length() + 2);
+                                if (enviarMensaje(clientId, destinoUsuario, mensaje)) {
+                                    out.writeUTF("Mensaje enviado correctamente a " + destinoUsuario);
                                 } else {
-                                    out.writeUTF("Error al crear el grupo"); // Error al crear el grupo
+                                    out.writeUTF("Error al enviar el mensaje");
                                 }
                             }
                             break;
-                        case "listargrupos":
-                            if (partes.length > 2) {
+                        case "mensajegrupo":
+                            if (partes.length < 3) {
                                 out.writeUTF("Comando incorrecto");
                             } else {
-                                String query = "SELECT * FROM grupos";
-                                PreparedStatement preparedStatement = cn.prepareStatement(query);
-                                ResultSet resultSet = preparedStatement.executeQuery();
-
-                                StringBuilder grupos = new StringBuilder();
-                                while (resultSet.next()) {
-                                    grupos.append(resultSet.getString("grp_nombre")).append(", ");
+                                String destinoUsuario = partes[1];
+                                String mensaje = clientMessage.substring(comando.length() + destinoUsuario.length() + 2);
+                                if (enviarMensajeGrupo(clientId, destinoUsuario, mensaje)) {
+                                    out.writeUTF("Mensaje enviado correctamente a " + destinoUsuario);
+                                } else {
+                                    out.writeUTF("Error al enviar el mensaje");
                                 }
-
-                                out.writeUTF(grupos.toString());
                             }
                             break;
-                        case "eliminargrupo":
-                            if (partes.length < 2) {
-                                out.writeUTF("Comando incorrecto");
-                            } else {
-                                String grupo = partes[1];
-                                int userId = clientId; // Suponiendo que el ID de usuario es igual a clientId
 
-                                // Verificar si el usuario es el administrador del grupo
-                                String consultaAdminQuery = "SELECT grp_permisos FROM grp_usuarios " +
-                                        "WHERE id_usuario = ? AND id_grupo = (SELECT id_grupo FROM grupos WHERE grp_nombre = ?)";
-                                PreparedStatement consultaAdminStatement = cn.prepareStatement(consultaAdminQuery);
-                                consultaAdminStatement.setInt(1, userId);
-                                consultaAdminStatement.setString(2, grupo);
-                                ResultSet resultadoAdmin = consultaAdminStatement.executeQuery();
-
-                                if (resultadoAdmin.next() && resultadoAdmin.getInt("grp_permisos") == 1) {
-                                    // El usuario es el administrador, procedemos con la eliminación en cascada del grupo
-                                    try {
-                                        cn.setAutoCommit(false); // Desactivar la confirmación automática
-
-                                        // Eliminar archivos relacionados con el grupo
-                                        String consultaEliminarArchivos = "DELETE FROM archivos WHERE id_grupo = (SELECT id_grupo FROM grupos WHERE grp_nombre = ?)";
-                                        PreparedStatement consultaEliminarArchivosStatement = cn.prepareStatement(consultaEliminarArchivos);
-                                        consultaEliminarArchivosStatement.setString(1, grupo);
-                                        consultaEliminarArchivosStatement.executeUpdate();
-
-                                        // Eliminar el grupo
-                                        String consultaEliminarGrupo = "DELETE FROM grupos WHERE grp_nombre = ?";
-                                        PreparedStatement consultaEliminarGrupoStatement = cn.prepareStatement(consultaEliminarGrupo);
-                                        consultaEliminarGrupoStatement.setString(1, grupo);
-                                        consultaEliminarGrupoStatement.executeUpdate();
-
-                                        cn.commit(); // Confirmar la eliminación en cascada
-
-                                        out.writeUTF("true"); // Grupo y archivos asociados eliminados
-                                    } catch (SQLException e) {
-                                        cn.rollback(); // En caso de error, realizar un rollback
-                                        out.writeUTF("Error al eliminar el grupo y sus archivos"); // Error en la eliminación en cascada
-                                    } finally {
-                                        cn.setAutoCommit(true); // Restaurar la confirmación automática
-                                    }
-                                } else {
-                                    out.writeUTF("No tienes permisos para eliminar el grupo"); // El usuario no es el administrador
-                                }
-                            }
+                        case "listar":
+                            String userList = listarUsuarios(clients);
+                            out.writeUTF(userList);
                             break;
                         case "logout":
                             out.writeUTF("true");
@@ -234,7 +182,7 @@ public class ServerWhatsCopernic {
                             break;
                     }
                 }
-            } catch (IOException | SQLException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
@@ -276,6 +224,61 @@ public class ServerWhatsCopernic {
                 return false;
             }
         }
+        public static boolean enviarMensaje(int remitenteId, String destinoUsuario, String mensaje) {
+            try {
+                String query = "SELECT id_usuario FROM usuarios WHERE username = ?";
+                PreparedStatement preparedStatement = cn.prepareStatement(query);
+                preparedStatement.setString(1, destinoUsuario);
+                ResultSet resultSet = preparedStatement.executeQuery();
+
+                if (resultSet.next()) {
+                    int idDestinatario = resultSet.getInt("id_usuario");
+
+                    String insertSql = "INSERT INTO mensajes (id_usuario_in, mensaje, id_usuario_out) VALUES (?, ?, ?)";
+                    PreparedStatement insertStatement = cn.prepareStatement(insertSql);
+                    insertStatement.setInt(1, remitenteId);
+                    insertStatement.setString(2, mensaje);
+                    insertStatement.setInt(3, idDestinatario);
+
+                    int rowCount = insertStatement.executeUpdate();
+                    return rowCount > 0;
+                } else {
+                    return false;
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+
+        public static boolean enviarMensajeGrupo(int remitenteId, String destinoUsuario, String mensaje) {
+            try {
+                String query = "SELECT id_usuario FROM usuarios WHERE username = ?";
+                PreparedStatement preparedStatement = cn.prepareStatement(query);
+                preparedStatement.setString(1, destinoUsuario);
+                ResultSet resultSet = preparedStatement.executeQuery();
+
+                if (resultSet.next()) {
+                    int idDestinatario = resultSet.getInt("id_usuario");
+
+                    String insertSql = "INSERT INTO mensajes (id_usuario_in, mensaje, id_grupo) VALUES (?, ?, ?)";
+                    PreparedStatement insertStatement = cn.prepareStatement(insertSql);
+                    insertStatement.setInt(1, remitenteId);
+                    insertStatement.setString(2, mensaje);
+                    insertStatement.setInt(3, idDestinatario);
+
+                    int rowCount = insertStatement.executeUpdate();
+                    return rowCount > 0;
+                } else {
+                    return false;
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+    }
+
 
         public static String listarUsuarios(HashMap<Integer, String> clients) {
             StringBuilder userList = new StringBuilder("Usuarios conectados: ");
@@ -287,5 +290,37 @@ public class ServerWhatsCopernic {
 
             return userList.toString();
         }
+
+
+    static class ServerConfiguration {
+        public int tamanoMaximoArchivo;
+        public int maximoConexiones;
+        public String pwdBdp;
+        public String userBdp;
+        public String nombreServidor;
+        public String rutaAlmacenamientoArchivos;
+
     }
+
+
+
+        private static void loadServerConfiguration() {
+            Properties properties = new Properties();
+            try (FileInputStream fis = new FileInputStream("server.properties")) {
+                properties.load(fis);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            // Carga las variables del archivo de configuración
+            serverConfig = new ServerConfiguration();
+            serverConfig.tamanoMaximoArchivo = Integer.parseInt(properties.getProperty("tamanoMaximoArchivo"));
+            serverConfig.maximoConexiones = Integer.parseInt(properties.getProperty("maximoConexiones"));
+            serverConfig.pwdBdp = properties.getProperty("pwdBdp");
+            serverConfig.userBdp = properties.getProperty("userBdp");
+            serverConfig.nombreServidor = properties.getProperty("nombreServidor");
+            serverConfig.rutaAlmacenamientoArchivos = properties.getProperty("rutaAlmacenamientoArchivos");
+
+        }
+
 }
