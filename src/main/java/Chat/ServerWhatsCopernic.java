@@ -9,8 +9,7 @@ import java.util.Properties;
 
 public class ServerWhatsCopernic {
     public static Connection cn;
-    public static DataInputStream in;
-    public static DataOutputStream out;
+
     public static ServerConfiguration serverConfig;
 
 
@@ -88,6 +87,8 @@ public class ServerWhatsCopernic {
 
         @Override
         public void run() {
+            DataInputStream in;
+            DataOutputStream out;
             try {
                 in = new DataInputStream(clientSocket.getInputStream());
                 out = new DataOutputStream(clientSocket.getOutputStream());
@@ -188,7 +189,7 @@ public class ServerWhatsCopernic {
 
                         case "logout":
                             out.writeUTF("true");
-                            clients.remove(clientId);
+                            logout(clientId, clients);
                             clientSocket.close();
                             return;
                         default:
@@ -327,7 +328,7 @@ public class ServerWhatsCopernic {
     }
 
     public static String listarUsuarios(HashMap<Integer, String> clients) {
-            StringBuilder userList = new StringBuilder("Usuarios conectados: ");
+            StringBuilder userList = new StringBuilder("Usuarios conectados: \n");
             for (String username : clients.values()) {
                 if (username != null) {
                     userList.append(username).append(", ");
@@ -368,5 +369,13 @@ public class ServerWhatsCopernic {
             serverConfig.rutaAlmacenamientoArchivos = properties.getProperty("rutaAlmacenamientoArchivos");
 
         }
+
+    public static void logout(int clientId, HashMap<Integer, String> clients) {
+        String username = clients.get(clientId);
+        if (username != null) {
+            clients.put(clientId, null);  // Marca al usuario como desconectado
+            System.out.println("Cliente " + clientId + " se ha desconectado (" + username + ")");
+        }
+    }
 
 }
