@@ -39,9 +39,7 @@ public class ClientWhatsCopernic {
             System.out.println("9. Eliminar grupo");
             System.out.println("10. Configuración");
             System.out.println("11. Salir");
-
-            System.out.print("Elija una opción: ");
-            int opcion = sc.nextInt();
+            int opcion = verificarInput(sc);
             sc.nextLine();
 
             switch (opcion) {
@@ -152,8 +150,7 @@ public class ClientWhatsCopernic {
 
             System.out.println("1. Iniciar Sesión");
             System.out.println("2. Crear Cuenta");
-            System.out.print("Elija una opción: ");
-            int opcion = sc.nextInt();
+            int opcion = verificarInput(sc);
             sc.nextLine();
 
             System.out.print("Usuario: ");
@@ -216,9 +213,7 @@ public class ClientWhatsCopernic {
     public static void enviarMensaje() {
         System.out.println("1. Mensaje a un usuario");
         System.out.println("2. Mensaje a un grupo");
-
-        System.out.print("Elija una opción: ");
-        int opcion = sc.nextInt();
+        int opcion = verificarInput(sc);
         sc.nextLine();
         switch (opcion) {
             case 1:
@@ -303,6 +298,21 @@ public class ClientWhatsCopernic {
         clientConfig.ipServidor = properties.getProperty("ipServidor");
         clientConfig.portServidor = Integer.parseInt(properties.getProperty("portServidor"));
 
+    }
+
+    public static int verificarInput(Scanner sc) {
+        System.out.print("Elije una opción: ");
+        int opcion;
+        while (true) {
+            if (sc.hasNextInt()) {
+                opcion = sc.nextInt();
+                break;
+            } else {
+                System.out.print("Opción no válida. \nElije una opción:  ");
+                sc.nextLine();
+            }
+        }
+        return opcion;
     }
 
 }
