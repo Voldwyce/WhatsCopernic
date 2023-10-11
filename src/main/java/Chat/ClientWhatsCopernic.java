@@ -3,14 +3,18 @@ package Chat;
 import java.io.*;
 import java.net.*;
 import java.util.Scanner;
+import java.util.Properties;
 
 public class ClientWhatsCopernic {
     public static Scanner sc = new Scanner(System.in);
     public static Socket sk;
     public static DataInputStream in;
     public static DataOutputStream out;
+    public static ClientConfiguration clientConfig;
+
 
     public static void main(String[] args) throws IOException {
+        loadClientConfiguration();
         System.out.println("¡¡Bienvenido a WhatsCopernic!! ");
         boolean salir = false;
 
@@ -210,4 +214,30 @@ public class ClientWhatsCopernic {
             e.printStackTrace();
         }
     }
+
+    static class ClientConfiguration {
+        public String nombreCliente;
+        public int tamanoMaximoArchivo;
+        public String ipServidor;
+        public int portServidor;
+
+    }
+
+    private static void loadClientConfiguration() {
+        Properties properties = new Properties();
+        try (FileInputStream fis = new FileInputStream("client.properties")) {
+            properties.load(fis);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Carga las variables del archivo de configuración
+        clientConfig = new ClientConfiguration();
+        clientConfig.nombreCliente = properties.getProperty("nombreCliente");
+        clientConfig.tamanoMaximoArchivo = Integer.parseInt(properties.getProperty("tamanoMaximoArchivo"));
+        clientConfig.ipServidor = properties.getProperty("ipServidor");
+        clientConfig.portServidor = Integer.parseInt(properties.getProperty("portServidor"));
+
+    }
+
 }
