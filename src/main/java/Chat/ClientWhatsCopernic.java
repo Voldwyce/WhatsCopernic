@@ -96,7 +96,7 @@ public class ClientWhatsCopernic {
             System.out.print("Contraseña: ");
             String password = sc.nextLine();
 
-            sk = new Socket("localhost", 42069);
+            sk = new Socket(clientConfig.ipServidor, clientConfig.portServidor);
             in = new DataInputStream(sk.getInputStream());
             out = new DataOutputStream(sk.getOutputStream());
 

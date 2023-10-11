@@ -137,6 +137,19 @@ public class ServerWhatsCopernic {
                                 }
                             }
                             break;
+                        case "mensaje":
+                            if (partes.length < 3) {
+                                out.writeUTF("Comando incorrecto");
+                            } else {
+                                String destinoUsuario = partes[1];
+                                String mensaje = clientMessage.substring(comando.length() + destinoUsuario.length() + 2);
+                                if (enviarMensaje(clientId, destinoUsuario, mensaje)) {
+                                    out.writeUTF("Mensaje enviado correctamente a " + destinoUsuario);
+                                } else {
+                                    out.writeUTF("Error al enviar el mensaje");
+                                }
+                            }
+                            break;
                         case "mensajegrupo":
                             if (partes.length < 3) {
                                 out.writeUTF("Comando incorrecto");
@@ -274,7 +287,7 @@ public class ServerWhatsCopernic {
             return userList.toString();
         }
 
-    }
+
     static class ServerConfiguration {
         public int tamanoMaximoArchivo;
         public int maximoConexiones;
@@ -286,22 +299,24 @@ public class ServerWhatsCopernic {
     }
 
 
-    private static void loadServerConfiguration() {
-        Properties properties = new Properties();
-        try (FileInputStream fis = new FileInputStream("server.properties")) {
-            properties.load(fis);
-        } catch (IOException e) {
-            e.printStackTrace();
+
+        private static void loadServerConfiguration() {
+            Properties properties = new Properties();
+            try (FileInputStream fis = new FileInputStream("server.properties")) {
+                properties.load(fis);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            // Carga las variables del archivo de configuración
+            serverConfig = new ServerConfiguration();
+            serverConfig.tamanoMaximoArchivo = Integer.parseInt(properties.getProperty("tamanoMaximoArchivo"));
+            serverConfig.maximoConexiones = Integer.parseInt(properties.getProperty("maximoConexiones"));
+            serverConfig.pwdBdp = properties.getProperty("pwdBdp");
+            serverConfig.userBdp = properties.getProperty("userBdp");
+            serverConfig.nombreServidor = properties.getProperty("nombreServidor");
+            serverConfig.rutaAlmacenamientoArchivos = properties.getProperty("rutaAlmacenamientoArchivos");
+
         }
 
-        // Carga las variables del archivo de configuración
-        serverConfig = new ServerConfiguration();
-        serverConfig.tamanoMaximoArchivo = Integer.parseInt(properties.getProperty("tamanoMaximoArchivo"));
-        serverConfig.maximoConexiones = Integer.parseInt(properties.getProperty("maximoConexiones"));
-        serverConfig.pwdBdp = properties.getProperty("pwdBdp");
-        serverConfig.userBdp = properties.getProperty("userBdp");
-        serverConfig.nombreServidor = properties.getProperty("nombreServidor");
-        serverConfig.rutaAlmacenamientoArchivos = properties.getProperty("rutaAlmacenamientoArchivos");
-
-    }
 }
