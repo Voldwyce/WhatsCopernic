@@ -121,6 +121,10 @@ public class ServerWhatsCopernic {
                                 }
                             }
                             break;
+                        case "listar":
+                            String userList = listarUsuarios(clients);
+                            out.writeUTF(userList);
+                            break;
                         case "creargrupo":
                             if (partes.length < 2) {
                                 out.writeUTF("Comando incorrecto");
@@ -158,9 +162,67 @@ public class ServerWhatsCopernic {
                                 }
                             }
                             break;
-                        case "listar":
-                            String userList = listarUsuarios(clients);
-                            out.writeUTF(userList);
+                        case "listargrupos":
+                            if (partes.length > 2) {
+                                out.writeUTF("Comando incorrecto");
+                            } else {
+                                String query = "SELECT * FROM grupos";
+                                PreparedStatement preparedStatement = cn.prepareStatement(query);
+                                ResultSet resultSet = preparedStatement.executeQuery();
+
+                                StringBuilder grupos = new StringBuilder();
+                                while (resultSet.next()) {
+                                    grupos.append(resultSet.getString("grp_nombre")).append(", ");
+                                }
+
+                                out.writeUTF(grupos.toString());
+                            }
+                            break;
+                        case "eliminargrupo":
+                            if (partes.length < 2) {
+                                out.writeUTF("Comando incorrecto");
+                            } else {
+                                String grupo = partes[1];
+                                int userId = clientId; // Suponiendo que el ID de usuario es igual a clientId
+
+                                // Verificar si el usuario es el administrador del grupo
+                                String consultaAdminQuery = "SELECT grp_permisos FROM grp_usuarios " +
+                                        "WHERE id_usuario = ? AND id_grupo = (SELECT id_grupo FROM grupos WHERE grp_nombre = ?)";
+                                PreparedStatement consultaAdminStatement = cn.prepareStatement(consultaAdminQuery);
+                                consultaAdminStatement.setInt(1, userId);
+                                consultaAdminStatement.setString(2, grupo);
+                                ResultSet resultadoAdmin = consultaAdminStatement.executeQuery();
+
+                                if (resultadoAdmin.next() && resultadoAdmin.getInt("grp_permisos") == 1) {
+                                    // El usuario es el administrador, procedemos con la eliminación en cascada del grupo
+                                    try {
+                                        cn.setAutoCommit(false); // Desactivar la confirmación automática
+
+                                        // Eliminar archivos relacionados con el grupo
+                                        String consultaEliminarArchivos = "DELETE FROM archivos WHERE id_grupo = (SELECT id_grupo FROM grupos WHERE grp_nombre = ?)";
+                                        PreparedStatement consultaEliminarArchivosStatement = cn.prepareStatement(consultaEliminarArchivos);
+                                        consultaEliminarArchivosStatement.setString(1, grupo);
+                                        consultaEliminarArchivosStatement.executeUpdate();
+
+                                        // Eliminar el grupo
+                                        String consultaEliminarGrupo = "DELETE FROM grupos WHERE grp_nombre = ?";
+                                        PreparedStatement consultaEliminarGrupoStatement = cn.prepareStatement(consultaEliminarGrupo);
+                                        consultaEliminarGrupoStatement.setString(1, grupo);
+                                        consultaEliminarGrupoStatement.executeUpdate();
+
+                                        cn.commit(); // Confirmar la eliminación en cascada
+
+                                        out.writeUTF("true"); // Grupo y archivos asociados eliminados
+                                    } catch (SQLException e) {
+                                        cn.rollback(); // En caso de error, realizar un rollback
+                                        out.writeUTF("Error al eliminar el grupo y sus archivos"); // Error en la eliminación en cascada
+                                    } finally {
+                                        cn.setAutoCommit(true); // Restaurar la confirmación automática
+                                    }
+                                } else {
+                                    out.writeUTF("No tienes permisos para eliminar el grupo"); // El usuario no es el administrador
+                                }
+                            }
                             break;
                         case "logout":
                             out.writeUTF("true");
