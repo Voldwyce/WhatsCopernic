@@ -145,6 +145,26 @@ public class ClientWhatsCopernic {
     }
 
     public static void enviarMensaje() {
+        System.out.println("1. Mensaje a un usuario");
+        System.out.println("2. Mensaje a un grupo");
+
+        System.out.print("Elija una opción: ");
+        int opcion = sc.nextInt();
+        sc.nextLine();
+        switch (opcion) {
+            case 1:
+                mensajeUsuario();
+                break;
+            case 2:
+                mensajeGrupo();
+                break;
+            default:
+                System.out.println("Opción inválida");
+                break;
+        }
+    }
+
+    public static void mensajeUsuario() {
         try {
             System.out.print("Ingrese el nombre del destinatario: ");
             String destinatario = sc.nextLine();
@@ -161,7 +181,26 @@ public class ClientWhatsCopernic {
         }
     }
 
-    public static void logout() {
+    public static void mensajeGrupo() {
+        try {
+            System.out.print("Ingrese el nombre del grupo: ");
+            String destinatario = sc.nextLine();
+            System.out.print("Ingrese el mensaje: ");
+            String mensaje = sc.nextLine();
+
+            out.writeUTF("mensajeGrupo " + destinatario + " " + mensaje);
+
+            String respuestaServidor = in.readUTF();
+            System.out.println(respuestaServidor);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+        public static void logout() {
         try {
             DataOutputStream out = new DataOutputStream(sk.getOutputStream());
             out.writeUTF("logout");
