@@ -52,6 +52,12 @@ public class ClientWhatsCopernic {
                 case 7:
                     crearGrupo();
                     break;
+                case 8:
+                    gestionarGrupo();
+                    break;
+                case 9:
+                    eliminarGrupo();
+                    break;
                 case 11:
                     logout();
                     continuar = false;
@@ -63,6 +69,36 @@ public class ClientWhatsCopernic {
         }
     }
 
+    private static void eliminarGrupo() {
+        try {
+            out.writeUTF("listargrupos");
+            String response = in.readUTF();
+            if (response.equals("Comando incorrecto")) {
+                System.out.println("Error al listar grupos");
+            } else {
+                String[] grupos = response.split(", ");
+                for (String grupo : grupos) {
+                    if (!grupo.equals("null")) {
+                        System.out.println(grupo);
+                    }
+                }
+                System.out.print("Nombre del grupo a eliminar: ");
+                String nombreGrupo = sc.nextLine();
+                out.writeUTF("eliminargrupo " + nombreGrupo);
+                String response2 = in.readUTF();
+                if (response2.equals("true")) {
+
+                    System.out.println("Grupo eliminado con éxito");
+                } else {
+                    System.out.println("Error al eliminar el grupo");
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
     private static void crearGrupo() {
         try {
             System.out.print("Nombre del grupo: ");
@@ -73,6 +109,35 @@ public class ClientWhatsCopernic {
                 System.out.println("Grupo creado con éxito");
             } else {
                 System.out.println("Error al crear el grupo");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void gestionarGrupo(){
+        try {
+            out.writeUTF("listargrupos");
+            String response = in.readUTF();
+            if (response.equals("Comando incorrecto")) {
+                System.out.println("Error al listar grupos");
+            } else {
+                String[] grupos = response.split(", ");
+                for (String grupo : grupos) {
+                    if (!grupo.equals("null")) {
+                        System.out.println(grupo);
+                    }
+                }
+                System.out.print("Nombre del grupo a gestionar: ");
+                String nombreGrupo = sc.nextLine();
+                out.writeUTF("listargrupos " + nombreGrupo);
+                String response2 = in.readUTF();
+                if (response2.equals("true")) {
+
+                    System.out.println("Grupo gestionado con éxito");
+                } else {
+                    System.out.println("Error al gestionar el grupo");
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();

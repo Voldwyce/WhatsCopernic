@@ -137,6 +137,10 @@ public class ServerWhatsCopernic {
                                 }
                             }
                             break;
+                        case "listar":
+                            String userList = listarUsuarios(clients);
+                            out.writeUTF(userList);
+                            break;
                         case "mensaje":
                             if (partes.length < 3) {
                                 out.writeUTF("Comando incorrecto");
@@ -163,11 +167,25 @@ public class ServerWhatsCopernic {
                                 }
                             }
                             break;
-
-                        case "listar":
-                            String userList = listarUsuarios(clients);
-                            out.writeUTF(userList);
+                        case "creargrupo":
+                            if (partes.length < 2) {
+                                out.writeUTF("Comando incorrecto");
+                            } else {
+                                String grupo = partes[1];
+                                int idGrupo = 0;
+                                try {
+                                    idGrupo = crearGrupo(clientId, grupo, cn);
+                                } catch (SQLException e) {
+                                    throw new RuntimeException(e);
+                                }
+                                if (idGrupo > 0) {
+                                    out.writeUTF("true"); // Grupo creado con éxito
+                                } else {
+                                    out.writeUTF("Error al crear el grupo");
+                                }
+                            }
                             break;
+
                         case "logout":
                             out.writeUTF("true");
                             clients.remove(clientId);
@@ -220,6 +238,7 @@ public class ServerWhatsCopernic {
                 return false;
             }
         }
+
         public static boolean enviarMensaje(int remitenteId, String destinoUsuario, String mensaje) {
             try {
                 String query = "SELECT id_usuario FROM usuarios WHERE username = ?";
@@ -275,8 +294,39 @@ public class ServerWhatsCopernic {
         }
     }
 
+    private static int crearGrupo(int clientId, String grupo, Connection cn) throws SQLException {
+        String query = "INSERT INTO grupos (grp_nombre) VALUES (?)";
+        PreparedStatement preparedStatement = cn.prepareStatement(query);
+        preparedStatement.setString(1, grupo);
+        int rowCount = preparedStatement.executeUpdate();
 
-        public static String listarUsuarios(HashMap<Integer, String> clients) {
+        if (rowCount > 0) {
+            String queryIdGrp = "SELECT id_grupo FROM grupos WHERE grp_nombre = ?";
+            PreparedStatement preparedStatementIdGrp = cn.prepareStatement(queryIdGrp);
+            preparedStatementIdGrp.setString(1, grupo);
+            ResultSet resultSetIdGrp = preparedStatementIdGrp.executeQuery();
+
+            int idGrupo = 0;
+
+            if (resultSetIdGrp.next()) {
+                idGrupo = resultSetIdGrp.getInt("id_grupo");
+            }
+
+            String query2 = "INSERT INTO grp_usuarios (id_usuario, id_grupo, grp_permisos) VALUES (?, ?, ?)";
+            PreparedStatement preparedStatement2 = cn.prepareStatement(query2);
+            preparedStatement2.setInt(1, clientId);
+            preparedStatement2.setInt(2, idGrupo);
+            preparedStatement2.setInt(3, 1);
+
+            preparedStatement2.executeUpdate();
+
+            return idGrupo; // Devuelve el ID del grupo creado
+        } else {
+            return -1; // Indica que hubo un error al crear el grupo
+        }
+    }
+
+    public static String listarUsuarios(HashMap<Integer, String> clients) {
             StringBuilder userList = new StringBuilder("Usuarios conectados: ");
             for (String username : clients.values()) {
                 if (username != null) {
