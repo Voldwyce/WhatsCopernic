@@ -5,29 +5,45 @@ import java.net.*;
 import java.sql.*;
 import java.util.HashMap;
 import java.security.MessageDigest;
+import java.util.Properties;
 
 public class ServerWhatsCopernic {
     public static Connection cn;
     public static DataInputStream in;
     public static DataOutputStream out;
+    public static ServerConfiguration serverConfig;
+
 
     public static void main(String[] args) throws IOException {
+        loadServerConfiguration();
+
         // Crear un HashMap para guardar los clientes conectados
         HashMap<Integer, String> clients = new HashMap<>();
         int nextClientId = 1;
+        int maxConnections = serverConfig.maximoConexiones; // Obtén el límite desde la configuración
 
         ServerSocket serverSocket = new ServerSocket(42069);
         System.out.println("WhatsCopernic está esperando usuarios...");
 
+        // Deja entrar a gente mientras no se supere el maximo del fichero de configuracion
         while (true) {
-            Socket clientSocket = serverSocket.accept();
-            System.out.println("Usuario conectado: " + clientSocket);
+            if (clients.size() < maxConnections) {
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("Usuario conectado: " + clientSocket);
 
-            int clientId = nextClientId++;
-            clients.put(clientId, null);
+                int clientId = nextClientId++;
+                clients.put(clientId, null);
 
-            ClientHandler clientHandler = new ClientHandler(clientId, clientSocket, clients);
-            clientHandler.start();
+                ClientHandler clientHandler = new ClientHandler(clientId, clientSocket, clients);
+                clientHandler.start();
+            } else {
+                System.out.println("Se ha alcanzado el límite de conexiones. Espere a que alguien se desconecte.");
+                try {
+                    Thread.sleep(5000); // Espera 5 segundos antes de volver a comprobar
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -36,7 +52,7 @@ public class ServerWhatsCopernic {
         static {
             try {
                 Class.forName("com.mysql.cj.jdbc.Driver");
-                cn = DriverManager.getConnection("jdbc:mysql://localhost:3306/whatscopernic", "admin", "Test123!");
+                cn = DriverManager.getConnection("jdbc:mysql://localhost:3306/whatscopernic",  serverConfig.userBdp, serverConfig.pwdBdp);
             } catch (ClassNotFoundException | SQLException e) {
                 e.printStackTrace();
             }
@@ -188,5 +204,35 @@ public class ServerWhatsCopernic {
 
             return userList.toString();
         }
+
+    }
+    static class ServerConfiguration {
+        public int tamanoMaximoArchivo;
+        public int maximoConexiones;
+        public String pwdBdp;
+        public String userBdp;
+        public String nombreServidor;
+        public String rutaAlmacenamientoArchivos;
+
+    }
+
+
+    private static void loadServerConfiguration() {
+        Properties properties = new Properties();
+        try (FileInputStream fis = new FileInputStream("server.properties")) {
+            properties.load(fis);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Carga las variables del archivo de configuración
+        serverConfig = new ServerConfiguration();
+        serverConfig.tamanoMaximoArchivo = Integer.parseInt(properties.getProperty("tamanoMaximoArchivo"));
+        serverConfig.maximoConexiones = Integer.parseInt(properties.getProperty("maximoConexiones"));
+        serverConfig.pwdBdp = properties.getProperty("pwdBdp");
+        serverConfig.userBdp = properties.getProperty("userBdp");
+        serverConfig.nombreServidor = properties.getProperty("nombreServidor");
+        serverConfig.rutaAlmacenamientoArchivos = properties.getProperty("rutaAlmacenamientoArchivos");
+
     }
 }
