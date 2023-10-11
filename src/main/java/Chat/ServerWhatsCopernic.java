@@ -51,7 +51,7 @@ public class ServerWhatsCopernic {
         static {
             try {
                 Class.forName("com.mysql.cj.jdbc.Driver");
-                cn = DriverManager.getConnection("jdbc:mysql://localhost:3306/whatscopernic",  serverConfig.userBdp, serverConfig.pwdBdp);
+                cn = DriverManager.getConnection("jdbc:mysql://localhost:3306/whatscopernic", serverConfig.userBdp, serverConfig.pwdBdp);
             } catch (ClassNotFoundException | SQLException e) {
                 e.printStackTrace();
             }
@@ -202,7 +202,7 @@ public class ServerWhatsCopernic {
             }
         }
 
-        public static boolean iniciarSesion(String usuario, String pwd) {
+        public synchronized static boolean iniciarSesion(String usuario, String pwd) {
             try {
                 String query = "SELECT * FROM usuarios WHERE username = ? AND pswd = ?";
                 PreparedStatement preparedStatement = cn.prepareStatement(query);
@@ -217,7 +217,7 @@ public class ServerWhatsCopernic {
             }
         }
 
-        public static boolean crearCuenta(String usuario, String pwd) {
+        public synchronized static boolean crearCuenta(String usuario, String pwd) {
             try {
                 String selectSql = "SELECT username FROM usuarios WHERE username = ?";
                 PreparedStatement selectStatement = cn.prepareStatement(selectSql);
@@ -240,7 +240,7 @@ public class ServerWhatsCopernic {
             }
         }
 
-        public static boolean enviarMensaje(int remitenteId, String destinoUsuario, String mensaje) {
+        public synchronized static boolean enviarMensaje(int remitenteId, String destinoUsuario, String mensaje) {
             try {
                 String query = "SELECT id_usuario FROM usuarios WHERE username = ?";
                 PreparedStatement preparedStatement = cn.prepareStatement(query);
@@ -267,7 +267,7 @@ public class ServerWhatsCopernic {
             }
         }
 
-        public static boolean enviarMensajeGrupo(int remitenteId, String destinoUsuario, String mensaje) {
+        public synchronized static boolean enviarMensajeGrupo(int remitenteId, String destinoUsuario, String mensaje) {
             try {
                 String query = "SELECT id_usuario FROM usuarios WHERE username = ?";
                 PreparedStatement preparedStatement = cn.prepareStatement(query);
@@ -295,7 +295,7 @@ public class ServerWhatsCopernic {
         }
     }
 
-    private static int crearGrupo(int clientId, String grupo, Connection cn) throws SQLException {
+    private synchronized static int crearGrupo(int clientId, String grupo, Connection cn) throws SQLException {
         String query = "INSERT INTO grupos (grp_nombre) VALUES (?)";
         PreparedStatement preparedStatement = cn.prepareStatement(query);
         preparedStatement.setString(1, grupo);
@@ -327,16 +327,16 @@ public class ServerWhatsCopernic {
         }
     }
 
-    public static String listarUsuarios(HashMap<Integer, String> clients) {
-            StringBuilder userList = new StringBuilder("Usuarios conectados: \n");
-            for (String username : clients.values()) {
-                if (username != null) {
-                    userList.append(username).append(", ");
-                }
+    public synchronized static String listarUsuarios(HashMap<Integer, String> clients) {
+        StringBuilder userList = new StringBuilder("Usuarios conectados: \n");
+        for (String username : clients.values()) {
+            if (username != null) {
+                userList.append(username).append(", ");
             }
-
-            return userList.toString();
         }
+
+        return userList.toString();
+    }
 
 
     static class ServerConfiguration {
@@ -350,27 +350,26 @@ public class ServerWhatsCopernic {
     }
 
 
-
-        private static void loadServerConfiguration() {
-            Properties properties = new Properties();
-            try (FileInputStream fis = new FileInputStream("server.properties")) {
-                properties.load(fis);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            // Carga las variables del archivo de configuración
-            serverConfig = new ServerConfiguration();
-            serverConfig.tamanoMaximoArchivo = Integer.parseInt(properties.getProperty("tamanoMaximoArchivo"));
-            serverConfig.maximoConexiones = Integer.parseInt(properties.getProperty("maximoConexiones"));
-            serverConfig.pwdBdp = properties.getProperty("pwdBdp");
-            serverConfig.userBdp = properties.getProperty("userBdp");
-            serverConfig.nombreServidor = properties.getProperty("nombreServidor");
-            serverConfig.rutaAlmacenamientoArchivos = properties.getProperty("rutaAlmacenamientoArchivos");
-
+    private static void loadServerConfiguration() {
+        Properties properties = new Properties();
+        try (FileInputStream fis = new FileInputStream("server.properties")) {
+            properties.load(fis);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
-    public static void logout(int clientId, HashMap<Integer, String> clients) {
+        // Carga las variables del archivo de configuración
+        serverConfig = new ServerConfiguration();
+        serverConfig.tamanoMaximoArchivo = Integer.parseInt(properties.getProperty("tamanoMaximoArchivo"));
+        serverConfig.maximoConexiones = Integer.parseInt(properties.getProperty("maximoConexiones"));
+        serverConfig.pwdBdp = properties.getProperty("pwdBdp");
+        serverConfig.userBdp = properties.getProperty("userBdp");
+        serverConfig.nombreServidor = properties.getProperty("nombreServidor");
+        serverConfig.rutaAlmacenamientoArchivos = properties.getProperty("rutaAlmacenamientoArchivos");
+
+    }
+
+    public synchronized static void logout(int clientId, HashMap<Integer, String> clients) {
         String username = clients.get(clientId);
         if (username != null) {
             clients.put(clientId, null);  // Marca al usuario como desconectado
