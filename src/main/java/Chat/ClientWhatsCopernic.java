@@ -48,7 +48,7 @@ public class ClientWhatsCopernic {
                     enviarMensaje();
                     break;
                 case 3:
-                    recibirMensaje();
+                    listarMensaje();
                     break;
                 case 4:
                     enviarArchivo();
@@ -134,28 +134,101 @@ public class ClientWhatsCopernic {
     }
 
     public static void enviarMensaje() {
-        System.out.println("Introduce el nombre del destinatario: ");
-        String destinatario = sc.nextLine();
-        System.out.println("Introduce el mensaje: ");
-        String mensaje = sc.nextLine();
+        System.out.println("1. Mensaje a un usuario");
+        System.out.println("2. Mensaje a un grupo");
+        int opcion = verificarInput(sc);
+        sc.nextLine();
+        switch (opcion) {
+            case 1:
+                mensajeUsuario();
+                break;
+            case 2:
+                mensajeGrupo();
+                break;
+            default:
+                System.out.println("Opción inválida");
+                break;
+        }
+    }
 
+
+    public static void mensajeUsuario() {
         try {
-            sk = new Socket(clientConfig.ipServidor, clientConfig.portServidor);
-            in = new DataInputStream(sk.getInputStream());
-            out = new DataOutputStream(sk.getOutputStream());
+            System.out.print("Ingrese el nombre del destinatario: ");
+            String destinatario = sc.nextLine();
+            System.out.print("Ingrese el mensaje: ");
+            String mensaje = sc.nextLine();
+
             out.writeUTF("mensaje " + destinatario + " " + mensaje);
-            String response = in.readUTF();
-            System.out.println(response);
+
+            String respuestaServidor = in.readUTF();
+            System.out.println(respuestaServidor);
+
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void recibirMensaje() {
+    public static void mensajeGrupo() {
         try {
-            out.writeUTF("mensajegrupo");
-            String response = in.readUTF();
-            System.out.println(response);
+            System.out.print("Ingrese el nombre del grupo: ");
+            String destinatario = sc.nextLine();
+            System.out.print("Ingrese el mensaje: ");
+            String mensaje = sc.nextLine();
+
+            out.writeUTF("mensajeGrupo " + destinatario + " " + mensaje);
+
+            String respuestaServidor = in.readUTF();
+            System.out.println(respuestaServidor);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void listarMensaje() {
+        System.out.println("1. Mensaje de usuario");
+        System.out.println("2. Mensaje de grupo");
+        int opcion = verificarInput(sc);
+        sc.nextLine();
+        switch (opcion) {
+            case 1:
+                listarMensajesUsuario();
+                break;
+            case 2:
+                listarMensajesGrupo();
+                break;
+            default:
+                System.out.println("Opción inválida");
+                break;
+        }
+    }
+
+    public static void listarMensajesUsuario() {
+        try {
+            System.out.print("Recibir mensajes de: ");
+            String destinatario = sc.nextLine();
+
+            out.writeUTF("listarmensajes " + destinatario );
+
+            String respuestaServidor = in.readUTF();
+            System.out.println(respuestaServidor);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void listarMensajesGrupo() {
+        try {
+            System.out.print("Recibir mensajes de: ");
+            String destinatario = sc.nextLine();
+
+            out.writeUTF("listarmensajesgrupo " + destinatario );
+
+            String respuestaServidor = in.readUTF();
+            System.out.println(respuestaServidor);
+
         } catch (IOException e) {
             e.printStackTrace();
         }
