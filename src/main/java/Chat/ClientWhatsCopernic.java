@@ -82,47 +82,49 @@ public class ClientWhatsCopernic {
     }
 
     public static boolean iniciarApp() {
-        System.out.println();
-        System.out.println("Menú de inicio");
-        System.out.println("1. Registrarse");
-        System.out.println("2. Iniciar Sesión");
-        System.out.println("3. Salir");
-        int respuesta = verificarInput(sc);
-
-        if (respuesta == 3) {
-            return true;
-        }
-        sc.nextLine();
-        System.out.print("Introduce el nombre de usuario: ");
-        String usuario = sc.nextLine();
-
-        System.out.print("Introduce la contraseña: ");
-        String pswd = sc.nextLine();
-
         try {
             sk = new Socket(clientConfig.ipServidor, clientConfig.portServidor);
-            in = new DataInputStream(sk.getInputStream());
             out = new DataOutputStream(sk.getOutputStream());
-            out.writeUTF("login " + usuario + " " + pswd);
-            String respuestaLogin = in.readUTF();
+            in = new DataInputStream(sk.getInputStream());
 
-            if (respuestaLogin.equals("true")) {
+            System.out.println("1. Iniciar Sesión");
+            System.out.println("2. Crear Cuenta");
+            System.out.print("Elija una opción: ");
+            int opcion = sc.nextInt();
+            sc.nextLine();
+
+            System.out.print("Usuario: ");
+            String usuario = sc.nextLine();
+            System.out.print("Contraseña: ");
+            String password = sc.nextLine();
+
+
+
+            if (opcion == 1) {
+                out.writeUTF("login " + usuario + " " + password);
+            } else if (opcion == 2) {
+                out.writeUTF("create " + usuario + " " + password);
+            } else {
+                System.out.println("Opción inválida");
+                return false;
+            }
+            String respuesta = in.readUTF();
+            if (respuesta.equals("true")) {
+                System.out.println();
+                System.out.println("Sesión iniciada.");
                 return true;
             } else {
-                System.out.println("Credenciales incorrectas");
+                System.out.println("Credenciales incorrectas o error al crear la cuenta.");
                 return false;
             }
         } catch (IOException e) {
             e.printStackTrace();
-            return true;
+            return false;
         }
     }
 
     public static void listarUsuarios() {
         try {
-            sk = new Socket(clientConfig.ipServidor, clientConfig.portServidor);
-            in = new DataInputStream(sk.getInputStream());
-            out = new DataOutputStream(sk.getOutputStream());
             out.writeUTF("listar");
             String response = in.readUTF();
             System.out.println(response);
@@ -151,9 +153,6 @@ public class ClientWhatsCopernic {
 
     public static void recibirMensaje() {
         try {
-            sk = new Socket(clientConfig.ipServidor, clientConfig.portServidor);
-            in = new DataInputStream(sk.getInputStream());
-            out = new DataOutputStream(sk.getOutputStream());
             out.writeUTF("mensajegrupo");
             String response = in.readUTF();
             System.out.println(response);
@@ -181,9 +180,6 @@ public class ClientWhatsCopernic {
         String destinatario = sc.nextLine();
 
         try {
-            sk = new Socket(clientConfig.ipServidor, clientConfig.portServidor);
-            in = new DataInputStream(sk.getInputStream());
-            out = new DataOutputStream(sk.getOutputStream());
             out.writeUTF("archivo " + destinatario);
             FileInputStream fis = new FileInputStream(rutaArchivo);
             byte[] buffer = new byte[4096];
@@ -204,9 +200,6 @@ public class ClientWhatsCopernic {
 
     public static void recibirArchivo() {
         try {
-            sk = new Socket(clientConfig.ipServidor, clientConfig.portServidor);
-            in = new DataInputStream(sk.getInputStream());
-            out = new DataOutputStream(sk.getOutputStream());
             out.writeUTF("descargar " + clientConfig.rutaDescargaArchivos);
             FileOutputStream fos = new FileOutputStream(clientConfig.rutaDescargaArchivos);
             byte[] buffer = new byte[4096];
@@ -444,7 +437,6 @@ public class ClientWhatsCopernic {
     }
     public static void logout() {
         try {
-            DataOutputStream out = new DataOutputStream(sk.getOutputStream());
             out.writeUTF("logout");
             sk.close();
             System.out.println("Hasta luego!! ^^");
