@@ -182,16 +182,123 @@ public class ServerWhatsCopernic {
                                 out.writeUTF("Comando incorrecto");
                             } else {
                                 String grupo = partes[1];
-                                int idGrupo = 0;
-                                try {
-                                    idGrupo = crearGrupo(clientId, grupo, cn);
-                                } catch (SQLException e) {
-                                    throw new RuntimeException(e);
-                                }
+                                int idGrupo = crearGrupo(clientId, grupo, cn, clients);
                                 if (idGrupo > 0) {
+                                    System.out.println("Grupo creado con éxito");
                                     out.writeUTF("true"); // Grupo creado con éxito
                                 } else {
                                     out.writeUTF("Error al crear el grupo");
+                                }
+                            }
+                            break;
+                        case "eliminargrupo":
+                            if (partes.length < 2) {
+                                out.writeUTF("Comando incorrecto");
+                            } else {
+                                String grupo = partes[1];
+                                boolean grupoEliminado = eliminarGrupo(clientId, grupo, cn, clients);
+                                if (grupoEliminado) {
+                                    System.out.println("Grupo eliminado con éxito");
+                                    out.writeUTF("true"); // Grupo eliminado con éxito
+                                } else {
+                                    System.out.println("Error al eliminar el grupo");
+                                    out.writeUTF("Error al eliminar el grupo"); // Error al eliminar el grupo
+                                }
+                            }
+                            break;
+                        case "veradmin":
+                            if (partes.length > 4) {
+                                out.writeUTF("Comando incorrecto");
+                            } else {
+                                String grupo = partes[1];
+                                boolean esAdmin = tienePermisosDeAdmin(clientId, obtenerIdGrupoDesdeDB(grupo, cn));
+                                if (esAdmin) {
+                                    System.out.println("El usuario es administrador del grupo");
+                                    out.writeUTF("true"); // El usuario es administrador del grupo
+                                } else {
+                                    System.out.println("El usuario no es administrador del grupo");
+                                    out.writeUTF("false"); // El usuario no es administrador del grupo
+                                }
+                            }
+                            break;
+                        case "agregarusuario":
+                            if (partes.length > 3) {
+                                out.writeUTF("Comando incorrecto");
+                            } else {
+                                String nombreUsuario = partes[1];
+                                String grupo = partes[2];
+                                boolean anadido = anadirMiembroAGrupo(nombreUsuario, grupo);
+                                if (anadido) {
+                                    System.out.println("Miembro añadido al grupo con éxito");
+                                    out.writeUTF("true"); // Miembro añadido al grupo con éxito
+                                } else {
+                                    System.out.println("Error al añadir al miembro al grupo");
+                                    out.writeUTF("Error al añadir al miembro al grupo"); // Error al añadir al miembro al grupo
+                                }
+                            }
+                            break;
+                        case "eliminarusuario":
+                            if (partes.length > 3) {
+                                out.writeUTF("Comando incorrecto");
+                            } else {
+                                String nombreUsuario = partes[1];
+                                String grupo = partes[2];
+                                boolean eliminado = eliminarMiembroDeGrupo(nombreUsuario, grupo);
+                                if (eliminado) {
+                                    System.out.println("Usuario eliminado del grupo con éxito");
+                                    out.writeUTF("true"); // Miembro eliminado del grupo con éxito
+                                } else {
+                                    System.out.println("Error al eliminar al usuario del grupo");
+                                    out.writeUTF("Error al eliminar al usuario del grupo"); // Error al eliminar al miembro del grupo
+                                }
+                            }
+                            break;
+                        case "listargrupos":
+                            if (partes.length > 2) {
+                                out.writeUTF("Comando incorrecto");
+                            } else {
+                                String grupos = listarGrupos();
+                                out.writeUTF(grupos);
+                            }
+                            break;
+                        case "vermiembros":
+                            if (partes.length > 3) {
+                                out.writeUTF("Comando incorrecto");
+                            } else {
+                                String grupo = partes[1];
+                                String miembros = listarMiembrosDeGrupo(grupo);
+                                out.writeUTF(miembros);
+                            }
+                            break;
+                        case "darpermisos":
+                            if (partes.length > 3) {
+                                out.writeUTF("Comando incorrecto");
+                            } else {
+                                String nombreUsuario = partes[1];
+                                String grupo = partes[2];
+                                boolean permisos = darPermisos(nombreUsuario, grupo);
+                                if (permisos) {
+                                    System.out.println("Permisos otorgados con éxito");
+                                    out.writeUTF("true"); // Permisos otorgados con éxito
+                                } else {
+                                    System.out.println("Error al otorgar permisos");
+                                    out.writeUTF("Error al otorgar permisos"); // Error al otorgar permisos
+                                }
+                            }
+                            break;
+                        case "quitarpermisos":
+                            if (partes.length > 3) {
+                                out.writeUTF("Comando incorrecto");
+                            } else {
+                                String nombreUsuario = partes[1];
+                                String grupo = partes[2];
+                                boolean permisos = quitarPermisos(nombreUsuario, grupo);
+                                if (permisos) {
+                                    System.out.println("Permisos revocados con éxito");
+                                    out.writeUTF("true"); // Permisos revocados con éxito
+                                } else {
+                                    System.out.println("Error al revocar permisos");
+                                    out.writeUTF("Error al revocar permisos"); // Error al revocar permisos
                                 }
                             }
                             break;
@@ -303,36 +410,320 @@ public class ServerWhatsCopernic {
         }
     }
 
-    private synchronized static int crearGrupo(int clientId, String grupo, Connection cn) throws SQLException {
-        String query = "INSERT INTO grupos (grp_nombre) VALUES (?)";
-        PreparedStatement preparedStatement = cn.prepareStatement(query);
-        preparedStatement.setString(1, grupo);
-        int rowCount = preparedStatement.executeUpdate();
+    private static int crearGrupo(int clientId, String grupo, Connection cn, HashMap<Integer, String> clients) {
+        try {
+            // Asegúrate de que el cliente tenga un ID de usuario válido
+            int idUsuario = obtenerIdUsuarioDesdeDB(clients.get(clientId), cn);
+            if (idUsuario != -1) {
+                // Ahora puedes continuar con la inserción del grupo
+                String insertGrupoQuery = "INSERT INTO grupos (grp_nombre, id_usuario) VALUES (?, ?)";
+                PreparedStatement insertGrupoStatement = cn.prepareStatement(insertGrupoQuery, Statement.RETURN_GENERATED_KEYS);
+                insertGrupoStatement.setString(1, grupo);
+                insertGrupoStatement.setInt(2, idUsuario);
+                int rowCount = insertGrupoStatement.executeUpdate();
 
-        if (rowCount > 0) {
-            String queryIdGrp = "SELECT id_grupo FROM grupos WHERE grp_nombre = ?";
-            PreparedStatement preparedStatementIdGrp = cn.prepareStatement(queryIdGrp);
-            preparedStatementIdGrp.setString(1, grupo);
-            ResultSet resultSetIdGrp = preparedStatementIdGrp.executeQuery();
+                if (rowCount > 0) {
+                    ResultSet generatedKeys = insertGrupoStatement.getGeneratedKeys();
+                    if (generatedKeys.next()) {
+                        int idGrupo = generatedKeys.getInt(1);
 
-            int idGrupo = 0;
+                        // Ahora, inserta la relación en la tabla grp_usuarios
+                        String insertRelacionQuery = "INSERT INTO grp_usuarios (id_grupo, id_usuario, grp_permisos) VALUES (?, ?, ?)";
+                        PreparedStatement insertRelacionStatement = cn.prepareStatement(insertRelacionQuery);
+                        insertRelacionStatement.setInt(1, idGrupo);
+                        insertRelacionStatement.setInt(2, idUsuario);
+                        insertRelacionStatement.setInt(3, 1); // Puedes ajustar los permisos aquí
 
-            if (resultSetIdGrp.next()) {
-                idGrupo = resultSetIdGrp.getInt("id_grupo");
+                        int relacionRowCount = insertRelacionStatement.executeUpdate();
+
+                        if (relacionRowCount > 0) {
+                            return idGrupo; // Grupo creado con éxito
+                        }
+                    }
+                }
             }
-
-            String query2 = "INSERT INTO grp_usuarios (id_usuario, id_grupo, grp_permisos) VALUES (?, ?, ?)";
-            PreparedStatement preparedStatement2 = cn.prepareStatement(query2);
-            preparedStatement2.setInt(1, clientId);
-            preparedStatement2.setInt(2, idGrupo);
-            preparedStatement2.setInt(3, 1);
-
-            preparedStatement2.executeUpdate();
-
-            return idGrupo; // Devuelve el ID del grupo creado
-        } else {
-            return -1; // Indica que hubo un error al crear el grupo
+            return 0; // Error al crear el grupo
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return 0; // Error SQL
         }
+    }
+
+    private static String listarGrupos() {
+        try {
+            String query = "SELECT grp_nombre FROM grupos";
+            PreparedStatement preparedStatement = cn.prepareStatement(query);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            StringBuilder grupos = new StringBuilder("Grupos:\n");
+
+            while (resultSet.next()) {
+                String grupo = resultSet.getString("grp_nombre");
+                grupos.append(grupo).append("\n");
+            }
+            return grupos.toString();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return "Error al listar grupos.";
+        }
+    }
+    private static int obtenerIdUsuarioDesdeDB(String username, Connection cn) {
+        try {
+            String query = "SELECT id_usuario FROM usuarios WHERE username = ?";
+            PreparedStatement preparedStatement = cn.prepareStatement(query);
+            preparedStatement.setString(1, username);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                return resultSet.getInt("id_usuario");
+            } else {
+                System.out.println("No se encontró el usuario en la base de datos.");
+                return -1; // Devuelve -1 para indicar que no se encontró el usuario en la base de datos.
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1; // Devuelve -1 en caso de error SQL.
+        }
+    }
+
+    public static boolean eliminarGrupo(int clientId, String grupo, Connection cn, HashMap<Integer, String> clients) {
+        String username = clients.get(clientId);
+
+        if (username == null) {
+            System.out.println("No se pudo obtener el nombre de usuario del cliente.");
+            return false;
+        }
+
+        // Obtener el ID de usuario del cliente actual
+        int idUsuario = obtenerIdUsuarioDesdeDB(username, cn);
+
+        if (idUsuario == -1) {
+            System.out.println("No se pudo obtener el ID de usuario de la base de datos.");
+            return false;
+        }
+
+        String query = "SELECT id_grupo, id_usuario FROM grupos WHERE grp_nombre = ?";
+        try {
+            PreparedStatement preparedStatement = cn.prepareStatement(query);
+            preparedStatement.setString(1, grupo);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                int idGrupo = resultSet.getInt("id_grupo");
+                int idCreadorGrupo = resultSet.getInt("id_usuario");
+
+                // Verifica si el cliente es el creador del grupo y tiene permisos de administrador
+                if (idCreadorGrupo == idUsuario && tienePermisosDeAdmin(clientId, idGrupo)) {
+                    // Antes de eliminar el grupo, primero elimina los registros relacionados en grp_usuarios
+                    if (eliminarUsuariosDelGrupo(idGrupo)) {
+                        // Ahora elimina el grupo
+                        String deleteQuery = "DELETE FROM grupos WHERE id_grupo = ?";
+                        PreparedStatement deleteStatement = cn.prepareStatement(deleteQuery);
+                        deleteStatement.setInt(1, idGrupo);
+                        int rowCount = deleteStatement.executeUpdate();
+
+                        if (rowCount > 0) {
+                            return true; // Grupo eliminado con éxito
+                        } else {
+                            return false; // Error al eliminar el grupo
+                        }
+                    }
+                } else {
+                    System.out.println("El cliente no es el creador del grupo o no tiene permisos de administrador.");
+                    return false; // El cliente no es el creador del grupo o no tiene permisos de administrador
+                }
+            } else {
+                System.out.println("No existe el grupo");
+                return false; // No existe el grupo
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private static boolean eliminarUsuariosDelGrupo(int idGrupo) { // Todos los usuarios del grupo
+        try {
+            String deleteUsuariosQuery = "DELETE FROM grp_usuarios WHERE id_grupo = ?";
+            PreparedStatement deleteUsuariosStatement = cn.prepareStatement(deleteUsuariosQuery);
+            deleteUsuariosStatement.setInt(1, idGrupo);
+            int rowCount = deleteUsuariosStatement.executeUpdate();
+
+            if (rowCount > 0) {
+                return true; // Usuario/s eliminado/s del grupo con éxito
+            } else {
+                return false; // Error al eliminar usuario/s del grupo
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static boolean anadirMiembroAGrupo(String nombreUsuario, String grupo) {
+        try {
+            String query = "SELECT id_usuario FROM usuarios WHERE username = ?";
+            PreparedStatement preparedStatement = cn.prepareStatement(query);
+            preparedStatement.setString(1, nombreUsuario);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                int idUsuario = resultSet.getInt("id_usuario");
+                int idGrupo = obtenerIdGrupoDesdeDB(grupo, cn);
+                String insertQuery = "INSERT INTO grp_usuarios (id_grupo, id_usuario, grp_permisos) VALUES (?, ?, ?)";
+                PreparedStatement insertStatement = cn.prepareStatement(insertQuery);
+                insertStatement.setInt(1, idGrupo); // Ajusta el ID del grupo aquí
+                insertStatement.setInt(2, idUsuario);
+                insertStatement.setInt(3, 0); // Ajusta los permisos aquí
+
+                int rowCount = insertStatement.executeUpdate();
+                return rowCount > 0;
+            } else {
+                System.out.println("No existe el usuario");
+                return false;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private static boolean darPermisos(String nombreUuario, String grupo) {
+        try {
+            String query = "SELECT id_usuario FROM usuarios WHERE username = ?";
+            PreparedStatement preparedStatement = cn.prepareStatement(query);
+            preparedStatement.setString(1, nombreUuario);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                int idUsuario = resultSet.getInt("id_usuario");
+                int idGrupo = obtenerIdGrupoDesdeDB(grupo, cn);
+                String updateQuery = "UPDATE grp_usuarios SET grp_permisos = 1 WHERE id_grupo = ? AND id_usuario = ?";
+                PreparedStatement updateStatement = cn.prepareStatement(updateQuery);
+                updateStatement.setInt(1, idGrupo);
+                updateStatement.setInt(2, idUsuario);
+
+                int rowCount = updateStatement.executeUpdate();
+                return rowCount > 0;
+            } else {
+                System.out.println("No existe el usuario");
+                return false;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private static boolean quitarPermisos(String nombreUsuario, String grupo) {
+        try {
+            String query = "SELECT id_usuario FROM usuarios WHERE username = ?";
+            PreparedStatement preparedStatement = cn.prepareStatement(query);
+            preparedStatement.setString(1, nombreUsuario);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                int idUsuario = resultSet.getInt("id_usuario");
+                int idGrupo = obtenerIdGrupoDesdeDB(grupo, cn);
+                String updateQuery = "UPDATE grp_usuarios SET grp_permisos = 0 WHERE id_grupo = ? AND id_usuario = ?";
+                PreparedStatement updateStatement = cn.prepareStatement(updateQuery);
+                updateStatement.setInt(1, idGrupo);
+                updateStatement.setInt(2, idUsuario);
+
+                int rowCount = updateStatement.executeUpdate();
+                return rowCount > 0;
+            } else {
+                System.out.println("No existe el usuario");
+                return false;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static boolean eliminarMiembroDeGrupo(String nombreUsuario, String grupo) { // Solo un usuario
+        try {
+            String query = "SELECT id_usuario FROM usuarios WHERE username = ?";
+            PreparedStatement preparedStatement = cn.prepareStatement(query);
+            preparedStatement.setString(1, nombreUsuario);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                int idUsuario = resultSet.getInt("id_usuario");
+                int idGrupo = obtenerIdGrupoDesdeDB(grupo, cn);
+                String deleteQuery = "DELETE FROM grp_usuarios WHERE id_grupo = ? AND id_usuario = ?";
+                PreparedStatement deleteStatement = cn.prepareStatement(deleteQuery);
+                deleteStatement.setInt(1, idGrupo);
+                deleteStatement.setInt(2, idUsuario);
+
+                int rowCount = deleteStatement.executeUpdate();
+                return rowCount > 0;
+            } else {
+                System.out.println("No existe el usuario");
+                return false;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static String listarMiembrosDeGrupo(String grupo) {
+        try {
+            String query = "SELECT username FROM usuarios INNER JOIN grp_usuarios ON usuarios.id_usuario = grp_usuarios.id_usuario INNER JOIN grupos ON grupos.id_grupo = grp_usuarios.id_grupo WHERE grupos.grp_nombre = ?";
+            PreparedStatement preparedStatement = cn.prepareStatement(query);
+            preparedStatement.setString(1, grupo);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            StringBuilder miembros = new StringBuilder("Miembros del grupo " + grupo + ":\n");
+
+            while (resultSet.next()) {
+                String miembro = resultSet.getString("username");
+                miembros.append(miembro).append("\n");
+            }
+            return miembros.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Error al listar miembros del grupo.";
+        }
+    }
+
+    public static int obtenerIdGrupoDesdeDB(String grupo, Connection cn) {
+        try {
+            String query = "SELECT id_grupo FROM grupos WHERE grp_nombre = ?";
+            PreparedStatement preparedStatement = cn.prepareStatement(query);
+            preparedStatement.setString(1, grupo);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                return resultSet.getInt("id_grupo");
+            } else {
+                System.out.println("El grupo no existe en la base de datos.");
+                return -1; // Devuelve -1 para indicar que el grupo no existe en la base de datos.
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1; // Devuelve -1 en caso de error SQL.
+        }
+    }
+
+    private static boolean tienePermisosDeAdmin(int clientId, int idGrupo) {
+        try {
+            String query = "SELECT grp_permisos FROM grp_usuarios WHERE id_usuario = ? AND id_grupo = ?";
+            PreparedStatement preparedStatement = cn.prepareStatement(query);
+            preparedStatement.setInt(1, clientId);
+            preparedStatement.setInt(2, idGrupo);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                int permisos = resultSet.getInt("grp_permisos");
+                return permisos == 1; // Comprobar si los permisos son de administrador (1)
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false; // Si hay un error, no tiene permisos
     }
 
     public synchronized static String listarUsuarios(HashMap<Integer, String> clients) {
