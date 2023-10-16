@@ -497,25 +497,25 @@ public class ServerWhatsCopernic {
                 ResultSet pertenenciaResult = pertenenciaStatement.executeQuery();
 
                 if (pertenenciaResult.next() && pertenenciaResult.getInt(1) == 1) {
-                    // El remitente pertenece al grupo, ahora puedes leer los mensajes
-                    String query = "SELECT mensaje FROM mensajes WHERE (id_grupo = ?)";
+                    // muestra usuario y mensaje enviado
+                    String query = "SELECT username, mensaje FROM mensajes INNER JOIN usuarios ON mensajes.id_usuario_in = usuarios.id_usuario WHERE id_grupo = ?";
                     PreparedStatement preparedStatement = cn.prepareStatement(query);
                     preparedStatement.setInt(1, idGrupoDestinatario);
 
                     ResultSet resultSet = preparedStatement.executeQuery();
                     StringBuilder mensajes = new StringBuilder();
+
                     while (resultSet.next()) {
                         String mensaje = resultSet.getString("mensaje");
-                        mensajes.append(mensaje).append("\n");
+                        String usuario = resultSet.getString("username");
+                        mensajes.append(usuario).append(": ").append(mensaje).append("\n");
                     }
 
                     return mensajes.toString();
                 } else {
-                    // El grupo destino no existe
                     return "El grupo no existe";
                 }
             } else {
-                // El grupo destino no existe
                 return "El grupo no existe";
             }
         } catch (SQLException e) {
