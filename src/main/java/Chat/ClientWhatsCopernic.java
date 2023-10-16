@@ -235,33 +235,23 @@ public class ClientWhatsCopernic {
     }
 
     public static void enviarArchivo() {
-        System.out.println("Introduce la ruta del archivo a enviar: ");
-        String rutaArchivo = sc.nextLine();
-        File file = new File(rutaArchivo);
-
-        if (!file.exists()) {
-            System.out.println("El archivo no existe");
-            return;
-        }
-
-        if (file.length() > clientConfig.tamanoMaximoArchivo) {
-            System.out.println("El archivo excede el tamaño máximo permitido");
-            return;
-        }
-
-        System.out.println("Introduce el nombre del destinatario: ");
-        String destinatario = sc.nextLine();
-
         try {
-            out.writeUTF("archivo " + destinatario);
-            FileInputStream fis = new FileInputStream(rutaArchivo);
+            System.out.print("Nombre del destinatario: ");
+            String destinatario = sc.nextLine();
+            System.out.print("Ruta del archivo: ");
+            String rutaArchivo = sc.nextLine();
+            File file = new File(rutaArchivo);
+            if (file.length() > clientConfig.tamanoMaximoArchivo) {
+                System.out.println("El archivo excede el tamaño máximo permitido");
+                return;
+            }
+            out.writeUTF("enviararchivo " + destinatario + " " + rutaArchivo);
+            FileInputStream fis = new FileInputStream(file);
             byte[] buffer = new byte[4096];
             int bytesRead;
-
             while ((bytesRead = fis.read(buffer)) > 0) {
                 out.write(buffer, 0, bytesRead);
             }
-
             fis.close();
             out.close();
             sk.close();
