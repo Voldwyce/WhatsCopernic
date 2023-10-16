@@ -743,7 +743,7 @@ public class ServerWhatsCopernic {
         return false; // Si hay un error, no tiene permisos
     }
 
-    public static boolean enviarArchivo(int remitenteId, String destinoUsuario, String archivo) {
+    public static boolean enviarArchivo(int remitenteId, String destinoUsuario, String rutaArchivoCompleta) {
         try {
             String query = "SELECT id_usuario FROM usuarios WHERE username = ?";
             PreparedStatement preparedStatement = cn.prepareStatement(query);
@@ -753,11 +753,16 @@ public class ServerWhatsCopernic {
             if (resultSet.next()) {
                 int idDestinatario = resultSet.getInt("id_usuario");
 
-                String insertSql = "INSERT INTO archivos (id_usuario_in, nombre_archivo, id_usuario_out) VALUES (?, ?, ?)";
+                // Divide la ruta completa para obtener el nombre del archivo
+                String[] rutaPartes = rutaArchivoCompleta.split("/");
+                String nombreArchivo = rutaPartes[rutaPartes.length - 1];
+
+                String insertSql = "INSERT INTO archivos (id_usuario_in, ruta_archivo, nombre_archivo, id_usuario_out) VALUES (?, ?, ?, ?)";
                 PreparedStatement insertStatement = cn.prepareStatement(insertSql);
                 insertStatement.setInt(1, remitenteId);
-                insertStatement.setString(2, archivo);
-                insertStatement.setInt(3, idDestinatario);
+                insertStatement.setString(2, rutaArchivoCompleta);
+                insertStatement.setString(3, nombreArchivo);
+                insertStatement.setInt(4, idDestinatario);
 
                 int rowCount = insertStatement.executeUpdate();
                 return rowCount > 0;
@@ -768,8 +773,8 @@ public class ServerWhatsCopernic {
             e.printStackTrace();
             return false;
         }
-
     }
+
     public synchronized static String listarUsuarios(HashMap<Integer, String> clients) {
         StringBuilder userList = new StringBuilder("Usuarios Conectados: \n");
 
