@@ -12,8 +12,7 @@ public class ClientWhatsCopernic {
     public static DataOutputStream out;
     public static ClientConfiguration clientConfig;
 
-
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         loadClientConfiguration();
         System.out.println("¡¡Bienvenido a WhatsCopernic!! ");
         boolean salir = false;
@@ -26,21 +25,16 @@ public class ClientWhatsCopernic {
         boolean continuar = true;
 
         while (continuar) {
-            System.out.println("");
+            System.out.println();
             System.out.println("Menú de opciones");
             System.out.println("1. Listar usuarios");
             System.out.println("2. Enviar mensaje");
             System.out.println("3. Recibir mensaje");
             System.out.println("4. Enviar archivo");
-            System.out.println("5. Ver archivos");
-            System.out.println("6. Recibir archivo");
-            System.out.println("7. Crear grupo");
-            System.out.println("8. Gestionar grupo");
-            System.out.println("9. Eliminar grupo");
-            System.out.println("10. Configuración");
-            System.out.println("11. Salir");
+            System.out.println("5. Recibir archivo");
+            System.out.println("6. Crear grupo");
+            System.out.println("7. Salir");
             int opcion = verificarInput(sc);
-            sc.nextLine();
 
             switch (opcion) {
                 case 1:
@@ -49,255 +43,189 @@ public class ClientWhatsCopernic {
                 case 2:
                     enviarMensaje();
                     break;
-                case 7:
+                case 3:
+                    recibirMensaje();
+                    break;
+                case 4:
+                    enviarArchivo();
+                    break;
+                case 5:
+                    recibirArchivo();
+                    break;
+                case 6:
                     crearGrupo();
                     break;
-                case 8:
-                    gestionarGrupo();
-                    break;
-                case 9:
-                    eliminarGrupo();
-                    break;
-                case 11:
-                    logout();
+                case 7:
+                    salir = true;
                     continuar = false;
                     break;
-                default:
-                    System.out.println("Opción inválida");
-                    break;
             }
         }
     }
 
-
-
-    private static void crearGrupo() {
-        try {
-            System.out.print("Nombre del grupo: ");
-            String nombreGrupo = sc.nextLine();
-            out.writeUTF("creargrupo " + nombreGrupo);
-            String response = in.readUTF();
-            if (response.equals("true")) {
-                System.out.println("Grupo creado con éxito");
-            } else {
-                System.out.println("Error al crear el grupo");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void gestionarGrupo(){
-        try {
-            out.writeUTF("listargrupos");
-            String response = in.readUTF();
-            if (response.equals("Comando incorrecto")) {
-                System.out.println("Error al listar grupos");
-            } else {
-                String[] grupos = response.split(", ");
-                for (String grupo : grupos) {
-                    if (!grupo.equals("null")) {
-                        System.out.println(grupo);
-                    }
-                }
-                System.out.print("Nombre del grupo a gestionar: ");
-                String nombreGrupo = sc.nextLine();
-                out.writeUTF("listargrupos " + nombreGrupo);
-                String response2 = in.readUTF();
-                if (response2.equals("true")) {
-
-                    System.out.println("Grupo gestionado con éxito");
-                } else {
-                    System.out.println("Error al gestionar el grupo");
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void eliminarGrupo() {
-        try {
-            out.writeUTF("listargrupos");
-            String response = in.readUTF();
-            if (response.equals("Comando incorrecto")) {
-                System.out.println("Error al listar grupos");
-            } else {
-                String[] grupos = response.split(", ");
-                for (String grupo : grupos) {
-                    if (!grupo.equals("null")) {
-                        System.out.println(grupo);
-                    }
-                }
-                System.out.print("Nombre del grupo a eliminar: ");
-                String nombreGrupo = sc.nextLine();
-                out.writeUTF("eliminargrupo " + nombreGrupo);
-                String response2 = in.readUTF();
-                if (response2.equals("true")) {
-
-                    System.out.println("Grupo eliminado con éxito");
-                } else {
-                    System.out.println("Error al eliminar el grupo");
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
     public static boolean iniciarApp() {
+        System.out.println("");
+        System.out.println("Menú de inicio");
+        System.out.println("1. Registrarse");
+        System.out.println("2. Iniciar Sesión");
+        System.out.println("3. Salir");
+        int respuesta = verificarInput(sc);
+
+        if (respuesta == 3) {
+            return true;
+        }
+
+        System.out.println("Introduce el nombre de usuario: ");
+        String usuario = sc.nextLine();
+
+        System.out.println("Introduce la contraseña: ");
+        String pswd = sc.nextLine();
+
         try {
-
-
-            System.out.println("1. Iniciar Sesión");
-            System.out.println("2. Crear Cuenta");
-            int opcion = verificarInput(sc);
-            sc.nextLine();
-
-            System.out.print("Usuario: ");
-            String usuario = sc.nextLine();
-            System.out.print("Contraseña: ");
-            String password = sc.nextLine();
-
             sk = new Socket(clientConfig.ipServidor, clientConfig.portServidor);
             in = new DataInputStream(sk.getInputStream());
             out = new DataOutputStream(sk.getOutputStream());
+            out.writeUTF("login " + usuario + " " + pswd);
+            String respuestaLogin = in.readUTF();
 
-            if (opcion == 1) {
-                out.writeUTF("login " + usuario + " " + password);
-            } else if (opcion == 2) {
-                out.writeUTF("create " + usuario + " " + password);
-            } else {
-                System.out.println("Opción inválida");
-                return false;
-            }
-            String respuesta = in.readUTF();
-            if (respuesta.equals("true")) {
-                System.out.println();
-                System.out.println("Sesión iniciada.");
+            if (respuestaLogin.equals("true")) {
                 return true;
             } else {
-                System.out.println("Credenciales incorrectas o error al crear la cuenta.");
+                System.out.println("Credenciales incorrectas");
                 return false;
             }
         } catch (IOException e) {
             e.printStackTrace();
-            return false;
+            return true;
         }
     }
 
     public static void listarUsuarios() {
         try {
+            sk = new Socket(clientConfig.ipServidor, clientConfig.portServidor);
+            in = new DataInputStream(sk.getInputStream());
+            out = new DataOutputStream(sk.getOutputStream());
             out.writeUTF("listar");
             String response = in.readUTF();
-
-            if (response.equals("Comando incorrecto")) {
-                System.out.println("Error al listar usuarios");
-            } else {
-                String[] usernames = response.split(", ");
-                for (String username : usernames) {
-                    if (!username.equals("null")) {
-                        System.out.println(username);
-                    }
-                }
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
+            System.out.println(response);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public static void enviarMensaje() {
-        System.out.println("1. Mensaje a un usuario");
-        System.out.println("2. Mensaje a un grupo");
-        int opcion = verificarInput(sc);
-        sc.nextLine();
-        switch (opcion) {
-            case 1:
-                mensajeUsuario();
-                break;
-            case 2:
-                mensajeGrupo();
-                break;
-            default:
-                System.out.println("Opción inválida");
-                break;
-        }
-    }
+        System.out.println("Introduce el nombre del destinatario: ");
+        String destinatario = sc.nextLine();
+        System.out.println("Introduce el mensaje: ");
+        String mensaje = sc.nextLine();
 
-    public static void mensajeUsuario() {
         try {
-            System.out.print("Ingrese el nombre del destinatario: ");
-            String destinatario = sc.nextLine();
-            System.out.print("Ingrese el mensaje: ");
-            String mensaje = sc.nextLine();
-
+            sk = new Socket(clientConfig.ipServidor, clientConfig.portServidor);
+            in = new DataInputStream(sk.getInputStream());
+            out = new DataOutputStream(sk.getOutputStream());
             out.writeUTF("mensaje " + destinatario + " " + mensaje);
-
-            String respuestaServidor = in.readUTF();
-            System.out.println(respuestaServidor);
-
+            String response = in.readUTF();
+            System.out.println(response);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void mensajeGrupo() {
+    public static void recibirMensaje() {
         try {
-            System.out.print("Ingrese el nombre del grupo: ");
-            String destinatario = sc.nextLine();
-            System.out.print("Ingrese el mensaje: ");
-            String mensaje = sc.nextLine();
-
-            out.writeUTF("mensajeGrupo " + destinatario + " " + mensaje);
-
-            String respuestaServidor = in.readUTF();
-            System.out.println(respuestaServidor);
-
+            sk = new Socket(clientConfig.ipServidor, clientConfig.portServidor);
+            in = new DataInputStream(sk.getInputStream());
+            out = new DataOutputStream(sk.getOutputStream());
+            out.writeUTF("mensajegrupo");
+            String response = in.readUTF();
+            System.out.println(response);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    public static void enviarArchivo() {
+        System.out.println("Introduce la ruta del archivo a enviar: ");
+        String rutaArchivo = sc.nextLine();
+        File file = new File(rutaArchivo);
 
+        if (!file.exists()) {
+            System.out.println("El archivo no existe");
+            return;
+        }
 
-        public static void logout() {
+        if (file.length() > clientConfig.tamanoMaximoArchivo) {
+            System.out.println("El archivo excede el tamaño máximo permitido");
+            return;
+        }
+
+        System.out.println("Introduce el nombre del destinatario: ");
+        String destinatario = sc.nextLine();
+
         try {
-            DataOutputStream out = new DataOutputStream(sk.getOutputStream());
-            out.writeUTF("logout");
+            sk = new Socket(clientConfig.ipServidor, clientConfig.portServidor);
+            in = new DataInputStream(sk.getInputStream());
+            out = new DataOutputStream(sk.getOutputStream());
+            out.writeUTF("archivo " + destinatario);
+            FileInputStream fis = new FileInputStream(rutaArchivo);
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+
+            while ((bytesRead = fis.read(buffer)) > 0) {
+                out.write(buffer, 0, bytesRead);
+            }
+
+            fis.close();
+            out.close();
             sk.close();
-            System.out.println("Hasta luego!! ^^");
+            System.out.println("Archivo enviado con éxito");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    static class ClientConfiguration {
-        public String nombreCliente;
-        public int tamanoMaximoArchivo;
-        public String ipServidor;
-        public int portServidor;
+    public static void recibirArchivo() {
+        try {
+            sk = new Socket(clientConfig.ipServidor, clientConfig.portServidor);
+            in = new DataInputStream(sk.getInputStream());
+            out = new DataOutputStream(sk.getOutputStream());
+            out.writeUTF("descargar " + clientConfig.rutaDescargaArchivos);
+            FileOutputStream fos = new FileOutputStream(clientConfig.rutaDescargaArchivos);
+            byte[] buffer = new byte[4096];
+            int bytesRead;
 
-    }
+            while ((bytesRead = in.read(buffer)) > 0) {
+                fos.write(buffer, 0, bytesRead);
+            }
 
-    private static void loadClientConfiguration() {
-        Properties properties = new Properties();
-        try (FileInputStream fis = new FileInputStream("client.properties")) {
-            properties.load(fis);
+            fos.close();
+            out.close();
+            sk.close();
+            System.out.println("Archivo recibido con éxito");
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
-        // Carga las variables del archivo de configuración
-        clientConfig = new ClientConfiguration();
-        clientConfig.nombreCliente = properties.getProperty("nombreCliente");
-        clientConfig.tamanoMaximoArchivo = Integer.parseInt(properties.getProperty("tamanoMaximoArchivo"));
-        clientConfig.ipServidor = properties.getProperty("ipServidor");
-        clientConfig.portServidor = Integer.parseInt(properties.getProperty("portServidor"));
+    public static void crearGrupo() {
+        System.out.println("Introduce el nombre del grupo: ");
+        String nombreGrupo = sc.nextLine();
 
+        try {
+            sk = new Socket(clientConfig.ipServidor, clientConfig.portServidor);
+            in = new DataInputStream(sk.getInputStream());
+            out = new DataOutputStream(sk.getOutputStream());
+            out.writeUTF("creargrupo " + nombreGrupo);
+            String response = in.readUTF();
+
+            if (response.equals("true")) {
+                System.out.println("Grupo creado con éxito");
+            } else {
+                System.out.println("Error al crear el grupo.");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static int verificarInput(Scanner sc) {
@@ -315,4 +243,34 @@ public class ClientWhatsCopernic {
         return opcion;
     }
 
+    static class ClientConfiguration {
+        public int tamanoMaximoArchivo;
+        public String rutaDescargaArchivos;
+        public String ipServidor;
+        public int portServidor;
+
+        public ClientConfiguration(int tamanoMaximoArchivo, String rutaDescargaArchivos, String ipServidor, int portServidor) {
+            this.tamanoMaximoArchivo = tamanoMaximoArchivo;
+            this.rutaDescargaArchivos = rutaDescargaArchivos;
+            this.ipServidor = ipServidor;
+            this.portServidor = portServidor;
+        }
+    }
+
+    private static void loadClientConfiguration() {
+        Properties properties = new Properties();
+        try (FileInputStream fis = new FileInputStream("client.properties")) {
+            properties.load(fis);
+
+            // Carga las variables del archivo de configuración
+            clientConfig = new ClientConfiguration(
+                    Integer.parseInt(properties.getProperty("tamanoMaximoArchivo")),
+                    properties.getProperty("rutaDescargaArchivos"),
+                    properties.getProperty("ipServidor"),
+                    Integer.parseInt(properties.getProperty("portServidor"))
+            );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

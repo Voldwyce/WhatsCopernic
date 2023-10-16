@@ -12,8 +12,7 @@ public class ServerWhatsCopernic {
 
     public static ServerConfiguration serverConfig;
 
-
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         loadServerConfiguration();
 
         // Crear un HashMap para guardar los clientes conectados
@@ -21,13 +20,23 @@ public class ServerWhatsCopernic {
         int nextClientId = 1;
         int maxConnections = serverConfig.maximoConexiones; // Obtén el límite desde la configuración
 
-        ServerSocket serverSocket = new ServerSocket(42069);
+        ServerSocket serverSocket = null;
+        try {
+            serverSocket = new ServerSocket(42069);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         System.out.println("WhatsCopernic está esperando usuarios...");
 
-        // Deja entrar a gente mientras no se supere el maximo del fichero de configuracion
+        // Deja entrar a gente mientras no se supere el máximo del fichero de configuración
         while (true) {
             if (clients.size() < maxConnections) {
-                Socket clientSocket = serverSocket.accept();
+                Socket clientSocket = null;
+                try {
+                    clientSocket = serverSocket.accept();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
                 System.out.println("Usuario conectado: " + clientSocket);
 
                 int clientId = nextClientId++;
@@ -149,7 +158,7 @@ public class ServerWhatsCopernic {
                                 String destinoUsuario = partes[1];
                                 String mensaje = clientMessage.substring(comando.length() + destinoUsuario.length() + 2);
                                 if (enviarMensaje(clientId, destinoUsuario, mensaje)) {
-                                    out.writeUTF("Mensaje enviado correctamente a " + destinoUsuario);
+                                    out.writeUTF("Mensaje enviado correctamente to " + destinoUsuario);
                                 } else {
                                     out.writeUTF("Error al enviar el mensaje");
                                 }
@@ -162,7 +171,7 @@ public class ServerWhatsCopernic {
                                 String destinoUsuario = partes[1];
                                 String mensaje = clientMessage.substring(comando.length() + destinoUsuario.length() + 2);
                                 if (enviarMensajeGrupo(clientId, destinoUsuario, mensaje)) {
-                                    out.writeUTF("Mensaje enviado correctamente a " + destinoUsuario);
+                                    out.writeUTF("Mensaje enviado correctamente to " + destinoUsuario);
                                 } else {
                                     out.writeUTF("Error al enviar el mensaje");
                                 }
@@ -186,7 +195,6 @@ public class ServerWhatsCopernic {
                                 }
                             }
                             break;
-
                         case "logout":
                             out.writeUTF("true");
                             logout(clientId, clients);
@@ -328,16 +336,33 @@ public class ServerWhatsCopernic {
     }
 
     public synchronized static String listarUsuarios(HashMap<Integer, String> clients) {
-        StringBuilder userList = new StringBuilder("Usuarios conectados: \n");
+        StringBuilder userList = new StringBuilder("Usuarios Conectados: \n");
+
         for (String username : clients.values()) {
             if (username != null) {
                 userList.append(username).append(", ");
             }
         }
 
+        userList.append("\nUsuarios Desconectados: \n");
+
+        try {
+            String query = "SELECT username FROM usuarios";
+            PreparedStatement preparedStatement = cn.prepareStatement(query);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                String username = resultSet.getString("username");
+                if (!clients.containsValue(username)) {
+                    userList.append(username).append(", ");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
         return userList.toString();
     }
-
 
     static class ServerConfiguration {
         public int tamanoMaximoArchivo;
@@ -346,9 +371,7 @@ public class ServerWhatsCopernic {
         public String userBdp;
         public String nombreServidor;
         public String rutaAlmacenamientoArchivos;
-
     }
-
 
     private static void loadServerConfiguration() {
         Properties properties = new Properties();
@@ -366,7 +389,6 @@ public class ServerWhatsCopernic {
         serverConfig.userBdp = properties.getProperty("userBdp");
         serverConfig.nombreServidor = properties.getProperty("nombreServidor");
         serverConfig.rutaAlmacenamientoArchivos = properties.getProperty("rutaAlmacenamientoArchivos");
-
     }
 
     public synchronized static void logout(int clientId, HashMap<Integer, String> clients) {
@@ -376,5 +398,4 @@ public class ServerWhatsCopernic {
             System.out.println("Cliente " + clientId + " se ha desconectado (" + username + ")");
         }
     }
-
 }
