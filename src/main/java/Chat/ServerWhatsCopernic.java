@@ -2,6 +2,10 @@ package Chat;
 
 import java.io.*;
 import java.net.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.*;
 import java.util.HashMap;
 import java.security.MessageDigest;
@@ -450,6 +454,7 @@ public class ServerWhatsCopernic {
             }
         }
     }
+
     public static String listarMensajesUsuario(int remitenteId, String nombreUsuario, HashMap<Integer, String> clients) {
         try {
             int idRemitente = obtenerIdUsuarioDesdeDB(clients.get(remitenteId), cn);
@@ -461,7 +466,7 @@ public class ServerWhatsCopernic {
 
             String query = "SELECT mensaje FROM mensajes WHERE (id_usuario_in = ? AND id_usuario_out = ?)";
             PreparedStatement preparedStatement = cn.prepareStatement(query);
-            preparedStatement.setInt(1,  idDestinatario);
+            preparedStatement.setInt(1, idDestinatario);
             preparedStatement.setInt(2, idRemitente);
 
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -581,6 +586,7 @@ public class ServerWhatsCopernic {
             return "Error al listar grupos.";
         }
     }
+
     private static int obtenerIdUsuarioDesdeDB(String username, Connection cn) {
         try {
             String query = "SELECT id_usuario FROM usuarios WHERE username = ?";
@@ -852,13 +858,26 @@ public class ServerWhatsCopernic {
                 int idDestinatario = resultSet.getInt("id_usuario");
 
                 // Divide la ruta completa para obtener el nombre del archivo
-                String[] rutaPartes = rutaArchivoCompleta.split("/");
+                String[] rutaPartes = rutaArchivoCompleta.split("\\\\");
                 String nombreArchivo = rutaPartes[rutaPartes.length - 1];
+
+                // Nombre archivo = current mili time
+                String nombreArchivoServer = System.currentTimeMillis() + nombreArchivo;
+                String rutaServidor = serverConfig.rutaAlmacenamientoArchivos + nombreArchivoServer;
+
+                // Copiar el archivo a la ruta del servidor, si la carpeta no existe la creamos
+                File carpetaAlmacenamiento = new File(serverConfig.rutaAlmacenamientoArchivos);
+                if (!carpetaAlmacenamiento.exists()) {
+                    carpetaAlmacenamiento.mkdir();
+                }
+
+                File archivo = new File(rutaArchivoCompleta);
+                Files.copy(archivo.toPath(), new File(rutaServidor).toPath());
 
                 String insertSql = "INSERT INTO archivos (id_usuario_in, ruta_archivo, nombre_archivo, id_usuario_out) VALUES (?, ?, ?, ?)";
                 PreparedStatement insertStatement = cn.prepareStatement(insertSql);
                 insertStatement.setInt(1, remitenteId);
-                insertStatement.setString(2, rutaArchivoCompleta);
+                insertStatement.setString(2, rutaServidor);
                 insertStatement.setString(3, nombreArchivo);
                 insertStatement.setInt(4, idDestinatario);
 
@@ -867,7 +886,7 @@ public class ServerWhatsCopernic {
             } else {
                 return false;
             }
-        } catch (SQLException e) {
+        } catch (SQLException | IOException e) {
             e.printStackTrace();
             return false;
         }
