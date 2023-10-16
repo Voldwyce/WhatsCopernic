@@ -10,7 +10,7 @@ import java.util.Properties;
 public class ServerWhatsCopernic {
     public static Connection cn;
 
-    public static ServerConfiguration serverConfig;
+    private static ServerConfiguration serverConfig;
 
     public static void main(String[] args) {
         loadServerConfiguration();
@@ -344,7 +344,7 @@ public class ServerWhatsCopernic {
                 } else {
                     String insertSql = "INSERT INTO usuarios (username, pswd) VALUES (?, ?)";
                     PreparedStatement insertStatement = cn.prepareStatement(insertSql);
-                    insertStatement.setString(1, usuario);
+                    insertStatement.setString(1, usuario.toLowerCase());
                     insertStatement.setString(2, pwd);
                     int rowCount = insertStatement.executeUpdate();
                     return rowCount > 0;
@@ -783,10 +783,17 @@ public class ServerWhatsCopernic {
     }
 
     public synchronized static void logout(int clientId, HashMap<Integer, String> clients) {
-        String username = clients.get(clientId);
-        if (username != null) {
-            clients.put(clientId, null);  // Marca al usuario como desconectado
-            System.out.println("Cliente " + clientId + " se ha desconectado (" + username + ")");
+        try {
+            String username = clients.get(clientId);
+            if (username != null) {
+                clients.put(clientId, null);  // Marca al usuario como desconectado
+                System.out.println("Cliente " + clientId + " se ha desconectado (" + username + ")");
+            }
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
     }
 }
