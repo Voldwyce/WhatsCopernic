@@ -10,7 +10,7 @@ public class ClientWhatsCopernic {
     public static Socket sk;
     public static DataInputStream in;
     public static DataOutputStream out;
-    public static ClientConfiguration clientConfig;
+    private static ClientConfiguration clientConfig;
 
     public static void main(String[] args) {
         loadClientConfiguration();
