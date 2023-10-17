@@ -328,13 +328,46 @@ public class ServerWhatsCopernic {
                                 }
                             }
                             break;
-                        case "enviararchivo":
-                            if (partes.length > 3) {
+                        case "enviararchivousuario":
+                            if (partes.length > 4) {
                                 out.writeUTF("Comando incorrecto");
                             } else {
                                 String nombreDestinatario = partes[1];
                                 String archivo = partes[2];
-                                boolean enviado = enviarArchivo(clientId, nombreDestinatario, archivo, clients);
+                                int permisos = Integer.parseInt(partes[3]);
+                                boolean enviado = enviarArchivoUsuario(clientId, nombreDestinatario, archivo, permisos, clients);
+                                if (enviado) {
+                                    System.out.println("Archivo enviado con éxito");
+                                    out.writeUTF("true"); // Archivo enviado con éxito
+                                } else {
+                                    System.out.println("Error al enviar el archivo");
+                                    out.writeUTF("Error al enviar el archivo"); // Error al enviar el archivo
+                                }
+                            }
+                            break;
+                        case "enviararchivotodos":
+                            if (partes.length > 3) {
+                                out.writeUTF("Comando incorrecto");
+                            } else {
+                                String archivo = partes[1];
+                                int permisos = Integer.parseInt(partes[2]);
+                                boolean enviado = enviarArchivoTodos(clientId, archivo, permisos, clients);
+                                if (enviado) {
+                                    System.out.println("Archivo enviado con éxito");
+                                    out.writeUTF("true"); // Archivo enviado con éxito
+                                } else {
+                                    System.out.println("Error al enviar el archivo");
+                                    out.writeUTF("Error al enviar el archivo"); // Error al enviar el archivo
+                                }
+                            }
+                            break;
+                        case "enviararchivogrupo":
+                            if (partes.length > 4) {
+                                out.writeUTF("Comando incorrecto");
+                            } else {
+                                String nombreGrupo = partes[1];
+                                String archivo = partes[2];
+                                boolean enviado = enviarArchivoGrupo(clientId, nombreGrupo, archivo, clients);
                                 if (enviado) {
                                     System.out.println("Archivo enviado con éxito");
                                     out.writeUTF("true"); // Archivo enviado con éxito
@@ -546,7 +579,7 @@ public class ServerWhatsCopernic {
         }
     }
 
-    private static int crearGrupo(int clientId, String grupo, Connection cn, HashMap<Integer, String> clients) {
+    private synchronized static int crearGrupo(int clientId, String grupo, Connection cn, HashMap<Integer, String> clients) {
         try {
             // Asegúrate de que el cliente tenga un ID de usuario válido
             int idUsuario = obtenerIdUsuarioDesdeDB(clients.get(clientId), cn);
@@ -585,7 +618,7 @@ public class ServerWhatsCopernic {
         }
     }
 
-    private static String listarGrupos() {
+    private synchronized static String listarGrupos() {
         try {
             String query = "SELECT grp_nombre FROM grupos";
             PreparedStatement preparedStatement = cn.prepareStatement(query);
@@ -604,7 +637,7 @@ public class ServerWhatsCopernic {
         }
     }
 
-    private static int obtenerIdUsuarioDesdeDB(String username, Connection cn) {
+    private synchronized static int obtenerIdUsuarioDesdeDB(String username, Connection cn) {
         try {
             String query = "SELECT id_usuario FROM usuarios WHERE username = ?";
             PreparedStatement preparedStatement = cn.prepareStatement(query);
@@ -623,7 +656,7 @@ public class ServerWhatsCopernic {
         }
     }
 
-    public static boolean eliminarGrupo(int clientId, String grupo, Connection cn, HashMap<Integer, String> clients) {
+    public synchronized static boolean eliminarGrupo(int clientId, String grupo, Connection cn, HashMap<Integer, String> clients) {
         String username = clients.get(clientId);
 
         if (username == null) {
@@ -680,7 +713,7 @@ public class ServerWhatsCopernic {
         return false;
     }
 
-    private static boolean eliminarUsuariosDelGrupo(int idGrupo) { // Todos los usuarios del grupo
+    private synchronized static boolean eliminarUsuariosDelGrupo(int idGrupo) { // Todos los usuarios del grupo
         try {
             String deleteUsuariosQuery = "DELETE FROM grp_usuarios WHERE id_grupo = ?";
             PreparedStatement deleteUsuariosStatement = cn.prepareStatement(deleteUsuariosQuery);
@@ -699,7 +732,7 @@ public class ServerWhatsCopernic {
         }
     }
 
-    public static boolean anadirMiembroAGrupo(String nombreUsuario, String grupo) {
+    public synchronized static boolean anadirMiembroAGrupo(String nombreUsuario, String grupo) {
         try {
             String query = "SELECT id_usuario FROM usuarios WHERE username = ?";
             PreparedStatement preparedStatement = cn.prepareStatement(query);
@@ -729,7 +762,7 @@ public class ServerWhatsCopernic {
         }
     }
 
-    private static boolean darPermisos(String nombreUuario, String grupo) {
+    private synchronized static boolean darPermisos(String nombreUuario, String grupo) {
         try {
             String query = "SELECT id_usuario FROM usuarios WHERE username = ?";
             PreparedStatement preparedStatement = cn.prepareStatement(query);
@@ -757,7 +790,7 @@ public class ServerWhatsCopernic {
         }
     }
 
-    private static boolean quitarPermisos(String nombreUsuario, String grupo) {
+    private synchronized static boolean quitarPermisos(String nombreUsuario, String grupo) {
         try {
             String query = "SELECT id_usuario FROM usuarios WHERE username = ?";
             PreparedStatement preparedStatement = cn.prepareStatement(query);
@@ -785,7 +818,7 @@ public class ServerWhatsCopernic {
         }
     }
 
-    public static boolean eliminarMiembroDeGrupo(String nombreUsuario, String grupo) { // Solo un usuario
+    public synchronized static boolean eliminarMiembroDeGrupo(String nombreUsuario, String grupo) { // Solo un usuario
         try {
             String query = "SELECT id_usuario FROM usuarios WHERE username = ?";
             PreparedStatement preparedStatement = cn.prepareStatement(query);
@@ -813,7 +846,7 @@ public class ServerWhatsCopernic {
         }
     }
 
-    public static String listarMiembrosDeGrupo(String grupo) {
+    public synchronized static String listarMiembrosDeGrupo(String grupo) {
         try {
             String query = "SELECT username FROM usuarios INNER JOIN grp_usuarios ON usuarios.id_usuario = grp_usuarios.id_usuario INNER JOIN grupos ON grupos.id_grupo = grp_usuarios.id_grupo WHERE grupos.grp_nombre = ?";
             PreparedStatement preparedStatement = cn.prepareStatement(query);
@@ -833,7 +866,7 @@ public class ServerWhatsCopernic {
         }
     }
 
-    public static int obtenerIdGrupoDesdeDB(String grupo, Connection cn) {
+    public synchronized static int obtenerIdGrupoDesdeDB(String grupo, Connection cn) {
         try {
             String query = "SELECT id_grupo FROM grupos WHERE grp_nombre = ?";
             PreparedStatement preparedStatement = cn.prepareStatement(query);
@@ -852,7 +885,7 @@ public class ServerWhatsCopernic {
         }
     }
 
-    private static boolean tienePermisosDeAdmin(int clientID, HashMap<Integer, String> clients, int idGrupo) {
+    private synchronized static boolean tienePermisosDeAdmin(int clientID, HashMap<Integer, String> clients, int idGrupo) {
         int idUsuario = obtenerIdUsuarioDesdeDB(clients.get(clientID), cn);
         try {
             String query = "SELECT grp_permisos FROM grp_usuarios WHERE id_usuario = ? AND id_grupo = ?";
@@ -872,7 +905,7 @@ public class ServerWhatsCopernic {
         return false; // Si hay un error, no tiene permisos
     }
 
-    public static boolean enviarArchivo(int clientID, String destinoUsuario, String rutaArchivoCompleta, HashMap<Integer, String> clients) {
+    public synchronized static boolean enviarArchivoUsuario(int clientID, String destinoUsuario, String rutaArchivoCompleta, int permisos, HashMap<Integer, String> clients) {
         int idUsuario = obtenerIdUsuarioDesdeDB(clients.get(clientID), cn);
         try {
             String query = "SELECT id_usuario FROM usuarios WHERE username = ?";
@@ -900,12 +933,13 @@ public class ServerWhatsCopernic {
                 Path destinoPath = Paths.get(rutaServidor);
                 Files.copy(origenPath, destinoPath, StandardCopyOption.REPLACE_EXISTING);
 
-                String insertSql = "INSERT INTO archivos (id_usuario_in, ruta_archivo, nombre_archivo, id_usuario_out) VALUES (?, ?, ?, ?)";
+                String insertSql = "INSERT INTO archivos (id_usuario_in, ruta_archivo, nombre_archivo, permisos, id_usuario_out) VALUES (?, ?, ?, ?, ?)";
                 PreparedStatement insertStatement = cn.prepareStatement(insertSql);
                 insertStatement.setInt(1, idUsuario);
                 insertStatement.setString(2, rutaServidor);
                 insertStatement.setString(3, nombreArchivo);
-                insertStatement.setInt(4, idDestinatario);
+                insertStatement.setInt(4, permisos);
+                insertStatement.setInt(5, idDestinatario);
 
                 int rowCount = insertStatement.executeUpdate();
                 return rowCount > 0;
@@ -939,6 +973,98 @@ public class ServerWhatsCopernic {
         }
     }
 
+    public synchronized static boolean enviarArchivoTodos(int clientId, String archivo, int permisos, HashMap<Integer, String> clients) {
+        int idUsuario = obtenerIdUsuarioDesdeDB(clients.get(clientId), cn);
+        try {
+            String query = "SELECT id_usuario FROM usuarios";
+            PreparedStatement preparedStatement = cn.prepareStatement(query);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            // Divide la ruta completa para obtener el nombre del archivo
+            String[] rutaPartes = archivo.split("\\\\");
+            String nombreArchivo = rutaPartes[rutaPartes.length - 1];
+
+            // Nombre archivo = current mili time
+            String nombreArchivoServer = System.currentTimeMillis() + nombreArchivo;
+            String rutaServidor = serverConfig.rutaAlmacenamientoArchivos + nombreArchivoServer;
+
+            // Copiar el archivo a la ruta del servidor, si la carpeta no existe la creamos
+            File carpetaAlmacenamiento = new File(serverConfig.rutaAlmacenamientoArchivos);
+            if (!carpetaAlmacenamiento.exists()) {
+                carpetaAlmacenamiento.mkdir();
+            }
+            Path origenPath = Paths.get(archivo);
+            Path destinoPath = Paths.get(rutaServidor);
+            Files.copy(origenPath, destinoPath, StandardCopyOption.REPLACE_EXISTING);
+
+            while (resultSet.next()) {
+                int idDestinatario = resultSet.getInt("id_usuario");
+
+                String insertSql = "INSERT INTO archivos (id_usuario_in, ruta_archivo, nombre_archivo, permisos, id_usuario_out) VALUES (?, ?, ?, ?, ?)";
+                PreparedStatement insertStatement = cn.prepareStatement(insertSql);
+                insertStatement.setInt(1, idUsuario);
+                insertStatement.setString(2, rutaServidor);
+                insertStatement.setString(3, nombreArchivo);
+                insertStatement.setInt(4, permisos);
+                insertStatement.setInt(5, idDestinatario);
+
+                int rowCount = insertStatement.executeUpdate();
+                if (rowCount <= 0) {
+                    return false;
+                }
+            }
+            return true;
+        } catch (SQLException | IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    public synchronized static boolean enviarArchivoGrupo(int clientId, String nombreGrupo, String archivo, HashMap<Integer, String> clients) {
+        int idUsuario = obtenerIdUsuarioDesdeDB(clients.get(clientId), cn);
+        try {
+            String query = "SELECT id_grupo FROM grupos WHERE grp_nombre = ?";
+            PreparedStatement preparedStatement = cn.prepareStatement(query);
+            preparedStatement.setString(1, nombreGrupo);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                int idGrupo = resultSet.getInt("id_grupo");
+
+                // Divide la ruta completa para obtener el nombre del archivo
+                String[] rutaPartes = archivo.split("\\\\");
+                String nombreArchivo = rutaPartes[rutaPartes.length - 1];
+
+                // Nombre archivo = current mili time
+                String nombreArchivoServer = System.currentTimeMillis() + nombreArchivo;
+                String rutaServidor = serverConfig.rutaAlmacenamientoArchivos + nombreArchivoServer;
+
+                // Copiar el archivo a la ruta del servidor, si la carpeta no existe la creamos
+                File carpetaAlmacenamiento = new File(serverConfig.rutaAlmacenamientoArchivos);
+                if (!carpetaAlmacenamiento.exists()) {
+                    carpetaAlmacenamiento.mkdir();
+                }
+                Path origenPath = Paths.get(archivo);
+                Path destinoPath = Paths.get(rutaServidor);
+                Files.copy(origenPath, destinoPath, StandardCopyOption.REPLACE_EXISTING);
+
+                String insertSql = "INSERT INTO archivos (id_usuario_in, ruta_archivo, nombre_archivo, permisos, id_grupo) VALUES (?, ?, ?, ?, ?)";
+                PreparedStatement insertStatement = cn.prepareStatement(insertSql);
+                insertStatement.setInt(1, idUsuario);
+                insertStatement.setString(2, rutaServidor);
+                insertStatement.setString(3, nombreArchivo);
+                insertStatement.setInt(4, 2);
+                insertStatement.setInt(5, idGrupo);
+
+                int rowCount = insertStatement.executeUpdate();
+                return rowCount > 0;
+            } else {
+                return false;
+            }
+        } catch (SQLException | IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
     public synchronized static String listarUsuarios(HashMap<Integer, String> clients) {
 
         StringBuilder userList = new StringBuilder("Usuarios Conectados: \n");
