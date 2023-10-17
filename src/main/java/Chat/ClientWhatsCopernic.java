@@ -98,8 +98,6 @@ public class ClientWhatsCopernic {
             System.out.print("Contraseña: ");
             String password = sc.nextLine();
 
-
-
             if (opcion == 1) {
                 out.writeUTF("login " + usuario + " " + password);
             } else if (opcion == 2) {
@@ -233,6 +231,7 @@ public class ClientWhatsCopernic {
             e.printStackTrace();
         }
     }
+
 
     public static void enviarArchivo() {
         try {
