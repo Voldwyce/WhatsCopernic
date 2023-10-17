@@ -329,9 +329,9 @@ public class ServerWhatsCopernic {
                             if (partes.length > 3) {
                                 out.writeUTF("Comando incorrecto");
                             } else {
-                                String destinoUsuario = partes[1];
+                                String nombreDestinatario = partes[1];
                                 String archivo = partes[2];
-                                boolean enviado = enviarArchivo(clientId, destinoUsuario, archivo);
+                                boolean enviado = enviarArchivo(clientId, nombreDestinatario, archivo, clients);
                                 if (enviado) {
                                     System.out.println("Archivo enviado con éxito");
                                     out.writeUTF("true"); // Archivo enviado con éxito
@@ -847,7 +847,8 @@ public class ServerWhatsCopernic {
         return false; // Si hay un error, no tiene permisos
     }
 
-    public static boolean enviarArchivo(int remitenteId, String destinoUsuario, String rutaArchivoCompleta) {
+    public static boolean enviarArchivo(int clientID, String destinoUsuario, String rutaArchivoCompleta, HashMap<Integer, String> clients) {
+        int idUsuario = obtenerIdUsuarioDesdeDB(clients.get(clientID), cn);
         try {
             String query = "SELECT id_usuario FROM usuarios WHERE username = ?";
             PreparedStatement preparedStatement = cn.prepareStatement(query);
@@ -876,7 +877,7 @@ public class ServerWhatsCopernic {
 
                 String insertSql = "INSERT INTO archivos (id_usuario_in, ruta_archivo, nombre_archivo, id_usuario_out) VALUES (?, ?, ?, ?)";
                 PreparedStatement insertStatement = cn.prepareStatement(insertSql);
-                insertStatement.setInt(1, remitenteId);
+                insertStatement.setInt(1, idUsuario);
                 insertStatement.setString(2, rutaServidor);
                 insertStatement.setString(3, nombreArchivo);
                 insertStatement.setInt(4, idDestinatario);
