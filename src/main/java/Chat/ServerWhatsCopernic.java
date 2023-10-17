@@ -894,6 +894,7 @@ public class ServerWhatsCopernic {
     }
 
     public synchronized static String listarUsuarios(HashMap<Integer, String> clients) {
+
         StringBuilder userList = new StringBuilder("Usuarios Conectados: \n");
 
         for (String username : clients.values()) {

@@ -322,6 +322,7 @@ public class ClientWhatsCopernic {
     }
 
     private static void gestionarGrupo() {
+
         try {
             System.out.print("Nombre del grupo: ");
             String nombreGrupo = sc.nextLine();
