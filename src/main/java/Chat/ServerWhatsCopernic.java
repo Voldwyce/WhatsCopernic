@@ -3,9 +3,6 @@ package Chat;
 import java.io.*;
 import java.net.*;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.sql.*;
 import java.util.HashMap;
 import java.security.MessageDigest;
@@ -24,7 +21,7 @@ public class ServerWhatsCopernic {
         int nextClientId = 1;
         int maxConnections = serverConfig.maximoConexiones; // Obtén el límite desde la configuración
 
-        ServerSocket serverSocket = null;
+        ServerSocket serverSocket;
         try {
             serverSocket = new ServerSocket(42069);
         } catch (IOException e) {
@@ -35,7 +32,7 @@ public class ServerWhatsCopernic {
         // Deja entrar a gente mientras no se supere el máximo del fichero de configuración
         while (true) {
             if (clients.size() < maxConnections) {
-                Socket clientSocket = null;
+                Socket clientSocket;
                 try {
                     clientSocket = serverSocket.accept();
                 } catch (IOException e) {
@@ -88,9 +85,9 @@ public class ServerWhatsCopernic {
             }
         }
 
-        private int clientId;
-        private Socket clientSocket;
-        private HashMap<Integer, String> clients;
+        private final int clientId;
+        private final Socket clientSocket;
+        private final HashMap<Integer, String> clients;
 
         public ClientHandler(int clientId, Socket clientSocket, HashMap<Integer, String> clients) {
             this.clientId = clientId;
