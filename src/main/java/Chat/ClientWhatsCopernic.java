@@ -253,8 +253,6 @@ public class ClientWhatsCopernic {
                 out.write(buffer, 0, bytesRead);
             }
             fis.close();
-            out.close();
-            sk.close();
             System.out.println("Archivo enviado con éxito");
         } catch (IOException e) {
             e.printStackTrace();
@@ -273,8 +271,6 @@ public class ClientWhatsCopernic {
             }
 
             fos.close();
-            out.close();
-            sk.close();
             System.out.println("Archivo recibido con éxito");
         } catch (IOException e) {
             e.printStackTrace();
