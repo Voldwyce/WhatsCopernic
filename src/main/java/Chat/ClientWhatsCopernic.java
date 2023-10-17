@@ -54,10 +54,10 @@ public class ClientWhatsCopernic {
                     enviarArchivo();
                     break;
                 case 5:
-                    // verArchivos(); Método que falta, agrégalo
+                    listarArchivos();
                     break;
                 case 6:
-                    recibirArchivo();
+                    //recibirArchivo();
                     break;
                 case 7:
                     crearGrupo();
@@ -261,6 +261,31 @@ public class ClientWhatsCopernic {
         }
     }
 
+
+    public static void listarArchivos(){
+        try{
+            out.writeUTF("listararchivos");
+            String response = in.readUTF();
+            if (response.equals("Comando incorrecto")) {
+                System.out.println("Error al listar archivos");
+            } else {
+                String[] archivos = response.split(", ");
+                for (String archivo : archivos) {
+                    if (!archivo.equals("null")) {
+                        System.out.println(archivo);
+                    }
+                }
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }catch (IOException e) {
+            e.printStackTrace();
+
+        }
+    }
     public static void recibirArchivo() {
         try {
             out.writeUTF("descargar " + clientConfig.rutaDescargaArchivos);
