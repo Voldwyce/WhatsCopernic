@@ -234,6 +234,7 @@ public class ClientWhatsCopernic {
         }
     }
 
+
     public static void enviarArchivo() {
         try {
             System.out.print("Nombre del destinatario: ");
