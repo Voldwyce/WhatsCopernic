@@ -721,6 +721,7 @@ public class ServerWhatsCopernic {
                 System.out.println("No existe el usuario");
                 return false;
             }
+
         } catch (SQLException e) {
             System.out.println("Error al añadir al miembro al grupo");
             e.printStackTrace();

@@ -14,7 +14,7 @@ public class ClientWhatsCopernic {
 
     public static void main(String[] args) {
         loadClientConfiguration();
-        System.out.println("¡¡Bienvenido a WhatsCopernic!! ");
+        System.out.println("¡¡Bienvenido a WhatsCopernic!!");
         boolean salir = false;
 
         while (!salir) {
