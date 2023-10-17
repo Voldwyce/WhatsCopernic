@@ -112,7 +112,7 @@ public class ClientWhatsCopernic {
                 System.out.println("Sesión iniciada.");
                 return true;
             } else {
-                System.out.println("Credenciales incorrectas o error al crear la cuenta.");
+                System.out.println(respuesta);
                 return false;
             }
         } catch (IOException e) {
@@ -129,6 +129,7 @@ public class ClientWhatsCopernic {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        esperar(2000);
     }
 
     public static void enviarMensaje() {
@@ -161,7 +162,7 @@ public class ClientWhatsCopernic {
 
             String respuestaServidor = in.readUTF();
             System.out.println(respuestaServidor);
-
+            esperar(2000);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -178,7 +179,7 @@ public class ClientWhatsCopernic {
 
             String respuestaServidor = in.readUTF();
             System.out.println(respuestaServidor);
-
+            esperar(2000);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -200,6 +201,7 @@ public class ClientWhatsCopernic {
                 System.out.println("Opción inválida");
                 break;
         }
+        esperar(2000);
     }
 
     public static void listarMensajesUsuario() {
@@ -215,6 +217,7 @@ public class ClientWhatsCopernic {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        esperar(2000);
     }
 
     public static void listarMensajesGrupo() {
@@ -226,7 +229,7 @@ public class ClientWhatsCopernic {
 
             String respuestaServidor = in.readUTF();
             System.out.println(respuestaServidor);
-
+            esperar(2000);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -271,6 +274,7 @@ public class ClientWhatsCopernic {
 
             fos.close();
             System.out.println("Archivo recibido con éxito");
+            esperar(1000);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -284,11 +288,7 @@ public class ClientWhatsCopernic {
             String response = in.readUTF();
             if (response.equals("true")) {
                 System.out.println("Grupo creado con éxito");
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                esperar(2000);
             } else {
                 System.out.println("Error al crear el grupo");
             }
@@ -310,11 +310,7 @@ public class ClientWhatsCopernic {
                         System.out.println(grupo);
                     }
                 }
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                esperar(2000);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -337,11 +333,7 @@ public class ClientWhatsCopernic {
                         System.out.println(miembro);
                     }
                 }
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                esperar(2000);
             }
 
             boolean esAdmin = verificarSiEsAdmin(nombreGrupo);
@@ -368,11 +360,7 @@ public class ClientWhatsCopernic {
                 }
             } else {
                 System.out.println("No eres administrador del grupo");
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                esperar(2000);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -386,11 +374,7 @@ public class ClientWhatsCopernic {
             return response.equals("true");
         } catch (Exception e) {
             System.out.println("Error al verificar si es admin");
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException ex) {
-                throw new RuntimeException(ex);
-            }
+            esperar(2000);
             return false;
         }
     }
@@ -408,11 +392,7 @@ public class ClientWhatsCopernic {
             } else {
                 System.out.println("Error al agregar el usuario");
             }
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            esperar(2000);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -431,11 +411,7 @@ public class ClientWhatsCopernic {
             } else {
                 System.out.println("Error al eliminar el usuario");
             }
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+esperar(2000);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -464,11 +440,7 @@ public class ClientWhatsCopernic {
             } else {
                 System.out.println("Error al modificar los permisos");
             }
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+esperar(2000);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -485,11 +457,7 @@ public class ClientWhatsCopernic {
             } else {
                 System.out.println(response);
             }
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            esperar(2000);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -516,6 +484,14 @@ public class ClientWhatsCopernic {
             }
         }
         return opcion;
+    }
+
+    public static void esperar(int tiempo) {
+        try {
+            Thread.sleep(tiempo);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     static class ClientConfiguration {

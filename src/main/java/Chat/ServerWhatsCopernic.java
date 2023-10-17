@@ -2,10 +2,7 @@ package Chat;
 
 import java.io.*;
 import java.net.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.sql.*;
 import java.util.HashMap;
 import java.security.MessageDigest;
@@ -28,6 +25,7 @@ public class ServerWhatsCopernic {
         try {
             serverSocket = new ServerSocket(42069);
         } catch (IOException e) {
+            System.out.println("Error al crear el socket del servidor");
             throw new RuntimeException(e);
         }
         System.out.println("WhatsCopernic está esperando usuarios...");
@@ -39,6 +37,7 @@ public class ServerWhatsCopernic {
                 try {
                     clientSocket = serverSocket.accept();
                 } catch (IOException e) {
+                    System.out.println("Error al aceptar la conexión del cliente");
                     throw new RuntimeException(e);
                 }
                 System.out.println("Usuario conectado: " + clientSocket);
@@ -66,6 +65,7 @@ public class ServerWhatsCopernic {
                 Class.forName("com.mysql.cj.jdbc.Driver");
                 cn = DriverManager.getConnection("jdbc:mysql://localhost:3306/whatscopernic", serverConfig.userBdp, serverConfig.pwdBdp);
             } catch (ClassNotFoundException | SQLException e) {
+                System.out.println("Error al conectar con la base de datos");
                 e.printStackTrace();
             }
         }
@@ -83,6 +83,7 @@ public class ServerWhatsCopernic {
 
                 return hexHash.toString();
             } catch (Exception e) {
+                System.out.println("Error al hashear la contraseña");
                 e.printStackTrace();
                 return null;
             }
@@ -100,9 +101,9 @@ public class ServerWhatsCopernic {
 
         @Override
         public void run() {
-            DataInputStream in;
-            DataOutputStream out;
             try {
+                DataInputStream in;
+                DataOutputStream out;
                 in = new DataInputStream(clientSocket.getInputStream());
                 out = new DataOutputStream(clientSocket.getOutputStream());
                 String clientMessage;
@@ -111,6 +112,8 @@ public class ServerWhatsCopernic {
                     try {
                         clientMessage = in.readUTF();
                     } catch (EOFException e) {
+                        System.out.println("Usuario desconectado: " + clientSocket);
+                        clients.remove(clientId);
                         break;
                     }
 
@@ -147,7 +150,7 @@ public class ServerWhatsCopernic {
                                     out.writeUTF("true");
                                     clients.put(clientId, usuario);
                                 } else {
-                                    out.writeUTF("Error al crear la cuenta");
+                                    out.writeUTF("Error al crear la cuenta, usuario en uso");
                                 }
                             }
                             break;
@@ -352,7 +355,8 @@ public class ServerWhatsCopernic {
                     }
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println("Usuario desconectado: " + clientSocket);
+                clients.remove(clientId);
             }
         }
 
@@ -366,6 +370,7 @@ public class ServerWhatsCopernic {
 
                 return result.next();
             } catch (SQLException e) {
+                System.out.println("Error al iniciar sesión");
                 e.printStackTrace();
                 return false;
             }
@@ -389,6 +394,7 @@ public class ServerWhatsCopernic {
                     return rowCount > 0;
                 }
             } catch (SQLException e) {
+                System.out.println("Error al crear la cuenta");
                 e.printStackTrace();
                 return false;
             }
@@ -408,6 +414,7 @@ public class ServerWhatsCopernic {
                 int rowCount = insertStatement.executeUpdate();
                 return rowCount > 0;
             } catch (SQLException e) {
+                System.out.println("Error al enviar el mensaje");
                 e.printStackTrace();
                 return false;
             }
@@ -449,6 +456,7 @@ public class ServerWhatsCopernic {
                     return false;
                 }
             } catch (SQLException e) {
+                System.out.println("Error al enviar el mensaje");
                 e.printStackTrace();
                 return false;
             }
@@ -657,6 +665,7 @@ public class ServerWhatsCopernic {
                 return false; // No existe el grupo
             }
         } catch (SQLException e) {
+            System.out.println("Error al eliminar el grupo");
             e.printStackTrace();
         }
         return false;
@@ -675,6 +684,7 @@ public class ServerWhatsCopernic {
                 return false; // Error al eliminar usuario/s del grupo
             }
         } catch (SQLException e) {
+            System.out.println("Error al eliminar usuario/s del grupo");
             e.printStackTrace();
             return false;
         }
@@ -703,6 +713,7 @@ public class ServerWhatsCopernic {
                 return false;
             }
         } catch (SQLException e) {
+            System.out.println("Error al añadir al miembro al grupo");
             e.printStackTrace();
             return false;
         }
@@ -730,6 +741,7 @@ public class ServerWhatsCopernic {
                 return false;
             }
         } catch (SQLException e) {
+            System.out.println("Error al otorgar permisos");
             e.printStackTrace();
             return false;
         }
@@ -757,6 +769,7 @@ public class ServerWhatsCopernic {
                 return false;
             }
         } catch (SQLException e) {
+            System.out.println("Error al revocar permisos");
             e.printStackTrace();
             return false;
         }
@@ -784,6 +797,7 @@ public class ServerWhatsCopernic {
                 return false;
             }
         } catch (SQLException e) {
+            System.out.println("Error al eliminar al miembro del grupo");
             e.printStackTrace();
             return false;
         }
@@ -842,6 +856,7 @@ public class ServerWhatsCopernic {
                 return permisos == 1; // Comprobar si los permisos son de administrador (1)
             }
         } catch (SQLException e) {
+            System.out.println("Error al comprobar los permisos");
             e.printStackTrace();
         }
         return false; // Si hay un error, no tiene permisos
@@ -888,6 +903,7 @@ public class ServerWhatsCopernic {
                 return false;
             }
         } catch (SQLException | IOException e) {
+            System.out.println("Error al enviar el archivo");
             e.printStackTrace();
             return false;
         }
@@ -896,11 +912,13 @@ public class ServerWhatsCopernic {
     public synchronized static String listarUsuarios(HashMap<Integer, String> clients) {
 
         StringBuilder userList = new StringBuilder("Usuarios Conectados: \n");
-
         for (String username : clients.values()) {
             if (username != null) {
                 userList.append(username).append(", ");
             }
+        }
+        if (userList.length() > 0) {
+            userList.deleteCharAt(userList.length() - 2);
         }
 
         userList.append("\nUsuarios Desconectados: \n");
@@ -915,8 +933,12 @@ public class ServerWhatsCopernic {
                 if (!clients.containsValue(username)) {
                     userList.append(username).append(", ");
                 }
+                if (resultSet.isLast()) {
+                    userList.deleteCharAt(userList.length() - 2);
+                }
             }
         } catch (SQLException e) {
+            System.out.println("Error al listar usuarios");
             e.printStackTrace();
         }
 
@@ -937,6 +959,7 @@ public class ServerWhatsCopernic {
         try (FileInputStream fis = new FileInputStream("server.properties")) {
             properties.load(fis);
         } catch (IOException e) {
+            System.out.println("Error al cargar el archivo de configuración");
             e.printStackTrace();
         }
 
@@ -960,6 +983,7 @@ public class ServerWhatsCopernic {
 
 
         } catch (Exception e) {
+            System.out.println("Error al desconectar el cliente " + clientId);
             e.printStackTrace();
         }
 
