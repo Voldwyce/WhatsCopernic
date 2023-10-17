@@ -374,6 +374,15 @@ public class ServerWhatsCopernic {
                                 }
                             }
                             break;
+                        case "listararchivos":
+                            if (partes.length > 2) {
+                                out.writeUTF("Comando incorrecto");
+                            } else {
+                                String archivos = listarArchivos(clientId, clients);
+                                out.writeUTF(archivos);
+                            }
+                            break;
+
                         case "logout":
                             out.writeUTF("true");
                             logout(clientId, clients);
@@ -924,6 +933,26 @@ public class ServerWhatsCopernic {
         } catch (SQLException | IOException e) {
             e.printStackTrace();
             return false;
+        }
+    }
+    public static String listarArchivos(int clientID, HashMap<Integer, String> clients) {
+        try {
+            int idUsuario = obtenerIdUsuarioDesdeDB(clients.get(clientID), cn);
+            String query = "SELECT nombre_archivo FROM archivos WHERE id_usuario_out = ?";
+            PreparedStatement preparedStatement = cn.prepareStatement(query);
+            preparedStatement.setInt(1, idUsuario);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            StringBuilder archivos = new StringBuilder("Archivos:\n");
+
+            while (resultSet.next()) {
+                String archivo = resultSet.getString("nombre_archivo");
+                archivos.append(archivo).append("\n");
+            }
+            return archivos.toString();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return "Error al listar archivos.";
         }
     }
 
