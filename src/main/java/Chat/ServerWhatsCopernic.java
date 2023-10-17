@@ -884,7 +884,7 @@ public class ServerWhatsCopernic {
                 int idDestinatario = resultSet.getInt("id_usuario");
 
                 // Divide la ruta completa para obtener el nombre del archivo
-                String[] rutaPartes = rutaArchivoCompleta.split("\\\\");
+                String[] rutaPartes = rutaArchivoCompleta.split("//");
                 String nombreArchivo = rutaPartes[rutaPartes.length - 1];
 
                 // Nombre archivo = current mili time
