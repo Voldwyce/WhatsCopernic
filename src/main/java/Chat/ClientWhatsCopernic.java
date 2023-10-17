@@ -257,25 +257,23 @@ public class ClientWhatsCopernic {
 
     private static void enviarArchivoUsuario() {
         try {
-            System.out.print("Nombre del usuario: ");
-            String nombreUsuario = sc.nextLine();
-            System.out.print("Ruta del archivo: ");
-            String rutaArchivo = sc.nextLine();
-            File file = new File(rutaArchivo);
-            if (file.length() > clientConfig.tamanoMaximoArchivo) {
-                System.out.println("El archivo es demasiado grande");
-                return;
-            }
-            System.out.println("Permisos: ");
-            System.out.println("1. Lectura");
-            System.out.println("2. Lectura y escritura");
+            System.out.println("Enviar a: ");
+            System.out.println("0. Todo el mundo");
+            System.out.println("1. Solo un usuario");
             int permisos = verificarInput(sc);
             sc.nextLine();
-            if (permisos == 1) {
-                out.writeUTF("enviararchivousuario " + nombreUsuario + " " + rutaArchivo + " " + permisos);
+            if (permisos == 0) {
+                System.out.print("Ruta del archivo: ");
+                String rutaArchivo = sc.nextLine();
+                File file = new File(rutaArchivo);
+                if (file.length() > clientConfig.tamanoMaximoArchivo) {
+                    System.out.println("El archivo es demasiado grande");
+                    return;
+                }
+                out.writeUTF("enviararchivotodos " + rutaArchivo + " " + permisos);
                 String response = in.readUTF();
                 if (response.equals("true")) {
-                    System.out.println("Archivo enviado a " + nombreUsuario + " con éxito");
+                    System.out.println("Archivo enviado con éxito");
                 } else {
                     System.out.println("Error al enviar el archivo");
                 }
@@ -284,7 +282,16 @@ public class ClientWhatsCopernic {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-            } else if (permisos == 2) {
+            } else if (permisos == 1) {
+                System.out.print("Nombre del usuario: ");
+                String nombreUsuario = sc.nextLine();
+                System.out.print("Ruta del archivo: ");
+                String rutaArchivo = sc.nextLine();
+                File file = new File(rutaArchivo);
+                if (file.length() > clientConfig.tamanoMaximoArchivo) {
+                    System.out.println("El archivo es demasiado grande");
+                    return;
+                }
                 out.writeUTF("enviararchivousuario " + nombreUsuario + " " + rutaArchivo + " " + permisos);
                 String response = in.readUTF();
                 if (response.equals("true")) {
@@ -320,39 +327,17 @@ public class ClientWhatsCopernic {
                 System.out.println("El archivo es demasiado grande");
                 return;
             }
-            System.out.println("Permisos: ");
-            System.out.println("1. Lectura");
-            System.out.println("2. Lectura y escritura");
-            int permisos = verificarInput(sc);
-            sc.nextLine();
-            if (permisos == 1) {
-                out.writeUTF("enviararchivogrupo " + nombreGrupo + " " + rutaArchivo + " " + permisos);
-                String response = in.readUTF();
-                if (response.equals("true")) {
-                    System.out.println("Archivo enviado a " + nombreGrupo + " con éxito");
-                } else {
-                    System.out.println("Error al enviar el archivo");
-                }
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            } else if (permisos == 2) {
-                out.writeUTF("enviararchivogrupo " + nombreGrupo + " " + rutaArchivo + " " + permisos);
-                String response = in.readUTF();
-                if (response.equals("true")) {
-                    System.out.println("Archivo enviado a " + nombreGrupo + " con éxito");
-                } else {
-                    System.out.println("Error al enviar el archivo");
-                }
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            out.writeUTF("enviararchivogrupo " + nombreGrupo + " " + rutaArchivo);
+            String response = in.readUTF();
+            if (response.equals("true")) {
+                System.out.println("Archivo enviado al grupo " + nombreGrupo + " con éxito");
             } else {
-                System.out.println("Opción inválida");
+                System.out.println("Error al enviar el archivo");
+            }
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         } catch (IOException e) {
             System.out.println("Error al enviar el archivo");
