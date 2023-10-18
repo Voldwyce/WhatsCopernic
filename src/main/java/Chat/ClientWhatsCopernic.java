@@ -97,7 +97,7 @@ public class ClientWhatsCopernic {
             sc.nextLine();
 
             System.out.print("Usuario: ");
-            String usuario = sc.nextLine();
+            String usuario = sc.nextLine().toLowerCase();
             System.out.print("Contraseña: ");
             String password = sc.nextLine();
 
