@@ -142,9 +142,11 @@ public class ClientWhatsCopernic {
         sc.nextLine();
         switch (opcion) {
             case 1:
+                listarUsuarios();
                 mensajeUsuario();
                 break;
             case 2:
+                listarGrupos();
                 mensajeGrupo();
                 break;
             default:
@@ -244,6 +246,7 @@ public class ClientWhatsCopernic {
     public static void enviarArchivo() {
         System.out.println("1. Enviar archivo a un usuario");
         System.out.println("2. Enviar archivo a un grupo");
+        System.out.println("3. Enviar archivo a todos los grupos");
         int opcion = verificarInput(sc);
         sc.nextLine();
 
@@ -256,11 +259,15 @@ public class ClientWhatsCopernic {
                 listarGrupos();
                 enviarArchivoGrupo();
                 break;
+            case 3:
+                enviarArchivoAGrupos();
+                break;
             default:
                 System.out.println("Opción inválida");
                 break;
         }
     }
+
 
 
     private static void enviarArchivoUsuario() {
@@ -358,6 +365,37 @@ public class ClientWhatsCopernic {
         }
     }
 
+    private static void enviarArchivoAGrupos() {
+        // Enviar archivo a todos los grupos
+        try {
+            System.out.print("Ruta del archivo: ");
+            String rutaArchivo = sc.nextLine();
+            File file = new File(rutaArchivo);
+            if (file.length() > clientConfig.tamanoMaximoArchivo) {
+                System.out.println("El archivo es demasiado grande");
+                return;
+            }
+            out.writeUTF("enviararchivoagrupos " + rutaArchivo + " " + 3);
+            String response = in.readUTF();
+            if (response.equals("true")) {
+                System.out.println("Archivo enviado a todos los grupos con éxito");
+            } else {
+                System.out.println("Error al enviar el archivo");
+            }
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        } catch (IOException e) {
+            System.out.println("Error al enviar el archivo");
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+    }
 
     public static void listarArchivos() {
         try {
