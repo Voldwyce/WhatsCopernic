@@ -57,7 +57,7 @@ public class ClientWhatsCopernic {
                     listarArchivos();
                     break;
                 case 6:
-                    //recibirArchivo();
+                    recibirArchivo();
                     break;
                 case 7:
                     crearGrupo();
@@ -283,23 +283,51 @@ public class ClientWhatsCopernic {
 
         }
     }
+
+    //descargar archivos introduciendo nombre
     public static void recibirArchivo() {
         try {
-            out.writeUTF("descargar " + clientConfig.rutaDescargaArchivos);
-            FileOutputStream fos = new FileOutputStream(clientConfig.rutaDescargaArchivos);
-            byte[] buffer = new byte[4096];
-            int bytesRead;
+            System.out.print("Nombre del archivo: ");
+            String archivo = sc.nextLine();
+            out.writeUTF("recibirarchivo " + archivo);
 
-            while ((bytesRead = in.read(buffer)) > 0) {
-                fos.write(buffer, 0, bytesRead);
+            String serverResponse = in.readUTF();
+
+            if (serverResponse.equals("Archivo")) {
+                DataInputStream fileIn = new DataInputStream(sk.getInputStream());
+                String fileName = fileIn.readUTF();
+                long fileSize = fileIn.readLong();
+
+                File downloadFolder = new File(clientConfig.rutaDescargaArchivos);
+                if (!downloadFolder.exists()) {
+                    downloadFolder.mkdirs(); // Crea la carpeta si no existe
+                }
+
+                FileOutputStream fileOut = new FileOutputStream(downloadFolder + File.separator + fileName);
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+
+                while (fileSize > 0 && (bytesRead = fileIn.read(buffer, 0, (int) Math.min(buffer.length, fileSize))) != -1) {
+                    fileOut.write(buffer, 0, bytesRead);
+                    fileSize -= bytesRead;
+                }
+
+                fileOut.close();
+                System.out.println(archivo + " recibido con éxito");
+            } else if (serverResponse.equals("Archivo no encontrado")) {
+                System.out.println("Archivo no encontrado en el servidor");
+            } else {
+                System.out.println("Respuesta inesperada del servidor: " + serverResponse);
             }
-
-            fos.close();
-            System.out.println("Archivo recibido con éxito");
         } catch (IOException e) {
             e.printStackTrace();
+            System.err.println("Error al recibir el archivo: " + e.getMessage());
         }
     }
+
+
+
+
 
     private static void crearGrupo() {
         try {
