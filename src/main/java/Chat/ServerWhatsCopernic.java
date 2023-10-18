@@ -4,7 +4,6 @@ import java.io.*;
 import java.net.*;
 import java.nio.file.*;
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.security.MessageDigest;
 import java.util.Properties;
@@ -727,11 +726,8 @@ public class ServerWhatsCopernic {
                         deleteStatement.setInt(1, idGrupo);
                         int rowCount = deleteStatement.executeUpdate();
 
-                        if (rowCount > 0) {
-                            return true; // Grupo eliminado con éxito
-                        } else {
-                            return false; // Error al eliminar el grupo
-                        }
+                        // Error al eliminar el grupo
+                        return rowCount > 0; // Grupo eliminado con éxito
                     }
                 } else {
                     System.out.println("El cliente no es el creador del grupo o no tiene permisos de administrador.");
@@ -755,11 +751,8 @@ public class ServerWhatsCopernic {
             deleteUsuariosStatement.setInt(1, idGrupo);
             int rowCount = deleteUsuariosStatement.executeUpdate();
 
-            if (rowCount > 0) {
-                return true; // Usuario/s eliminado/s del grupo con éxito
-            } else {
-                return false; // Error al eliminar usuario/s del grupo
-            }
+            // Error al eliminar usuario/s del grupo
+            return rowCount > 0; // Usuario/s eliminado/s del grupo con éxito
         } catch (SQLException e) {
             System.out.println("Error al eliminar usuario/s del grupo");
             e.printStackTrace();
@@ -1218,7 +1211,7 @@ public class ServerWhatsCopernic {
                 userList.append(username).append(", ");
             }
         }
-        if (userList.length() > 0) {
+        if (!userList.isEmpty()) {
             userList.deleteCharAt(userList.length() - 2);
         }
 
