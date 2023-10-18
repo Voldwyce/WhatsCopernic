@@ -361,6 +361,22 @@ public class ServerWhatsCopernic {
                                 }
                             }
                             break;
+                        case "enviararchivoagrupos":
+                            if (partes.length > 4) {
+                                out.writeUTF("Comando incorrecto");
+                            } else {
+                                String archivo = partes[1];
+                                int permisos = Integer.parseInt(partes[2]);
+                                boolean enviado = enviarArchivoAGrupos(clientId, archivo, permisos, clients);
+                                if (enviado) {
+                                    System.out.println("Archivo enviado con éxito");
+                                    out.writeUTF("true"); // Archivo enviado con éxito
+                                } else {
+                                    System.out.println("Error al enviar el archivo");
+                                    out.writeUTF("Error al enviar el archivo"); // Error al enviar el archivo
+                                }
+                            }
+                            break;
                         case "enviararchivogrupo":
                             if (partes.length > 4) {
                                 out.writeUTF("Comando incorrecto");
@@ -710,11 +726,8 @@ public class ServerWhatsCopernic {
                         deleteStatement.setInt(1, idGrupo);
                         int rowCount = deleteStatement.executeUpdate();
 
-                        if (rowCount > 0) {
-                            return true; // Grupo eliminado con éxito
-                        } else {
-                            return false; // Error al eliminar el grupo
-                        }
+                        // Error al eliminar el grupo
+                        return rowCount > 0; // Grupo eliminado con éxito
                     }
                 } else {
                     System.out.println("El cliente no es el creador del grupo o no tiene permisos de administrador.");
@@ -738,11 +751,8 @@ public class ServerWhatsCopernic {
             deleteUsuariosStatement.setInt(1, idGrupo);
             int rowCount = deleteUsuariosStatement.executeUpdate();
 
-            if (rowCount > 0) {
-                return true; // Usuario/s eliminado/s del grupo con éxito
-            } else {
-                return false; // Error al eliminar usuario/s del grupo
-            }
+            // Error al eliminar usuario/s del grupo
+            return rowCount > 0; // Usuario/s eliminado/s del grupo con éxito
         } catch (SQLException e) {
             System.out.println("Error al eliminar usuario/s del grupo");
             e.printStackTrace();
@@ -1054,6 +1064,51 @@ public class ServerWhatsCopernic {
             return false;
         }
     }
+
+    public synchronized static boolean enviarArchivoAGrupos(int clientId, String archivo, int permisos, HashMap<Integer, String> clients) {
+        int idUsuario = obtenerIdUsuarioDesdeDB(clients.get(clientId), cn);
+        try {
+            String query = "SELECT id_grupo FROM grupos";
+            PreparedStatement preparedStatement = cn.prepareStatement(query);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            // Divide la ruta completa para obtener el nombre del archivo
+            String[] rutaPartes = archivo.split("\\\\");
+            String nombreArchivo = rutaPartes[rutaPartes.length - 1];
+
+            // Nombre archivo = current mili time
+            String nombreArchivoServer = System.currentTimeMillis() + nombreArchivo;
+            String rutaServidor = serverConfig.rutaAlmacenamientoArchivos + nombreArchivoServer;
+
+            // Copiar el archivo a la ruta del servidor, si la carpeta no existe la creamos
+            File carpetaAlmacenamiento = new File(serverConfig.rutaAlmacenamientoArchivos);
+            if (!carpetaAlmacenamiento.exists()) {
+                carpetaAlmacenamiento.mkdir();
+            }
+            Path origenPath = Paths.get(archivo);
+            Path destinoPath = Paths.get(rutaServidor);
+            Files.copy(origenPath, destinoPath, StandardCopyOption.REPLACE_EXISTING);
+
+            while (resultSet.next()) {
+                String insertSql = "INSERT INTO archivos (id_usuario_in, ruta_archivo, nombre_archivo, permisos) VALUES (?, ?, ?, ?)";
+                PreparedStatement insertStatement = cn.prepareStatement(insertSql);
+                insertStatement.setInt(1, idUsuario);
+                insertStatement.setString(2, rutaServidor);
+                insertStatement.setString(3, nombreArchivo);
+                insertStatement.setInt(4, permisos);
+
+                int rowCount = insertStatement.executeUpdate();
+                if (rowCount <= 0) {
+                    return false;
+                }
+            }
+            return true;
+        } catch (SQLException | IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public synchronized static boolean enviarArchivoGrupo(int clientId, String nombreGrupo, String archivo, HashMap<Integer, String> clients) {
         int idUsuario = obtenerIdUsuarioDesdeDB(clients.get(clientId), cn);
         try {
@@ -1157,7 +1212,7 @@ public class ServerWhatsCopernic {
                 userList.append(username).append(", ");
             }
         }
-        if (userList.length() > 0) {
+        if (!userList.isEmpty()) {
             userList.deleteCharAt(userList.length() - 2);
         }
 
