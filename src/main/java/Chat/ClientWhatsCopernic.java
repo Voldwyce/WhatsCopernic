@@ -92,7 +92,6 @@ public class ClientWhatsCopernic {
 
             System.out.println("1. Iniciar Sesión");
             System.out.println("2. Crear Cuenta");
-            System.out.print("Elija una opción: ");
             int opcion = verificarInput(sc);
             sc.nextLine();
 
@@ -244,7 +243,7 @@ public class ClientWhatsCopernic {
 
 
     public static void enviarArchivo() {
-        System.out.println("1. Enviar archivo a un usuario");
+        System.out.println("1. Enviar archivo a usuarios");
         System.out.println("2. Enviar archivo a un grupo");
         System.out.println("3. Enviar archivo a todos los grupos");
         int opcion = verificarInput(sc);
