@@ -527,7 +527,7 @@ public class ClientWhatsCopernic {
             } else {
                 System.out.println("Error al eliminar el usuario");
             }
-esperar(2000);
+            esperar(2000);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -556,7 +556,7 @@ esperar(2000);
             } else {
                 System.out.println("Error al modificar los permisos");
             }
-esperar(2000);
+            esperar(2000);
         } catch (IOException e) {
             e.printStackTrace();
         }
