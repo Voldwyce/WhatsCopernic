@@ -14,7 +14,7 @@ public class ClientWhatsCopernic {
 
     public static void main(String[] args) {
         loadClientConfiguration();
-        System.out.println("¡¡Bienvenido a WhatsCopernic!! ");
+        System.out.println("¡¡Bienvenido a WhatsCopernic!!");
         boolean salir = false;
 
         while (!salir) {
@@ -112,7 +112,7 @@ public class ClientWhatsCopernic {
                 System.out.println("Sesión iniciada.");
                 return true;
             } else {
-                System.out.println("Credenciales incorrectas o error al crear la cuenta.");
+                System.out.println(respuesta);
                 return false;
             }
         } catch (IOException e) {
@@ -129,6 +129,7 @@ public class ClientWhatsCopernic {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        esperar(2000);
     }
 
     public static void enviarMensaje() {
@@ -161,7 +162,7 @@ public class ClientWhatsCopernic {
 
             String respuestaServidor = in.readUTF();
             System.out.println(respuestaServidor);
-
+            esperar(2000);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -178,7 +179,7 @@ public class ClientWhatsCopernic {
 
             String respuestaServidor = in.readUTF();
             System.out.println(respuestaServidor);
-
+            esperar(2000);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -200,6 +201,7 @@ public class ClientWhatsCopernic {
                 System.out.println("Opción inválida");
                 break;
         }
+        esperar(2000);
     }
 
     public static void listarMensajesUsuario() {
@@ -215,6 +217,7 @@ public class ClientWhatsCopernic {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        esperar(2000);
     }
 
     public static void listarMensajesGrupo() {
@@ -226,7 +229,7 @@ public class ClientWhatsCopernic {
 
             String respuestaServidor = in.readUTF();
             System.out.println(respuestaServidor);
-
+            esperar(2000);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -234,27 +237,118 @@ public class ClientWhatsCopernic {
 
 
     public static void enviarArchivo() {
+        System.out.println("1. Enviar archivo a un usuario");
+        System.out.println("2. Enviar archivo a un grupo");
+        int opcion = verificarInput(sc);
+        sc.nextLine();
+
+        switch (opcion) {
+            case 1:
+                listarUsuarios();
+                enviarArchivoUsuario();
+                break;
+            case 2:
+                listarGrupos();
+                enviarArchivoGrupo();
+                break;
+            default:
+                System.out.println("Opción inválida");
+                break;
+        }
+    }
+
+
+    private static void enviarArchivoUsuario() {
         try {
-            System.out.print("Nombre del destinatario: ");
-            String destinatario = sc.nextLine();
+            System.out.println("Enviar a: ");
+            System.out.println("0. Todo el mundo");
+            System.out.println("1. Solo un usuario");
+            int permisos = verificarInput(sc);
+            sc.nextLine();
+            if (permisos == 0) {
+                System.out.print("Ruta del archivo: ");
+                String rutaArchivo = sc.nextLine();
+                File file = new File(rutaArchivo);
+                if (file.length() > clientConfig.tamanoMaximoArchivo) {
+                    System.out.println("El archivo es demasiado grande");
+                    return;
+                }
+                out.writeUTF("enviararchivotodos " + rutaArchivo + " " + permisos);
+                String response = in.readUTF();
+                if (response.equals("true")) {
+                    System.out.println("Archivo enviado con éxito");
+                } else {
+                    System.out.println("Error al enviar el archivo");
+                }
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            } else if (permisos == 1) {
+                System.out.print("Nombre del usuario: ");
+                String nombreUsuario = sc.nextLine();
+                System.out.print("Ruta del archivo: ");
+                String rutaArchivo = sc.nextLine();
+                File file = new File(rutaArchivo);
+                if (file.length() > clientConfig.tamanoMaximoArchivo) {
+                    System.out.println("El archivo es demasiado grande");
+                    return;
+                }
+                out.writeUTF("enviararchivousuario " + nombreUsuario + " " + rutaArchivo + " " + permisos);
+                String response = in.readUTF();
+                if (response.equals("true")) {
+                    System.out.println("Archivo enviado a " + nombreUsuario + " con éxito");
+                } else {
+                    System.out.println("Error al enviar el archivo");
+                }
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                System.out.println("Opción inválida");
+            }
+        } catch (IOException e) {
+            System.out.println("Error al enviar el archivo");
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+    }
+    private static void enviarArchivoGrupo() {
+        try {
+            System.out.print("Nombre del grupo: ");
+            String nombreGrupo = sc.nextLine();
             System.out.print("Ruta del archivo: ");
             String rutaArchivo = sc.nextLine();
             File file = new File(rutaArchivo);
             if (file.length() > clientConfig.tamanoMaximoArchivo) {
-                System.out.println("El archivo excede el tamaño máximo permitido");
+                System.out.println("El archivo es demasiado grande");
                 return;
             }
-            out.writeUTF("enviararchivo " + destinatario + " " + rutaArchivo);
-            FileInputStream fis = new FileInputStream(file);
-            byte[] buffer = new byte[4096];
-            int bytesRead;
-            while ((bytesRead = fis.read(buffer)) > 0) {
-                out.write(buffer, 0, bytesRead);
+            out.writeUTF("enviararchivogrupo " + nombreGrupo + " " + rutaArchivo);
+            String response = in.readUTF();
+            if (response.equals("true")) {
+                System.out.println("Archivo enviado al grupo " + nombreGrupo + " con éxito");
+            } else {
+                System.out.println("Error al enviar el archivo");
             }
-            fis.close();
-            System.out.println("Archivo enviado con éxito");
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Error al enviar el archivo");
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
@@ -283,8 +377,6 @@ public class ClientWhatsCopernic {
 
         }
     }
-
-    //descargar archivos introduciendo nombre
     public static void recibirArchivo() {
         try {
             System.out.print("Nombre del archivo: ");
@@ -337,11 +429,7 @@ public class ClientWhatsCopernic {
             String response = in.readUTF();
             if (response.equals("true")) {
                 System.out.println("Grupo creado con éxito");
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                esperar(2000);
             } else {
                 System.out.println("Error al crear el grupo");
             }
@@ -363,11 +451,7 @@ public class ClientWhatsCopernic {
                         System.out.println(grupo);
                     }
                 }
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                esperar(2000);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -390,11 +474,7 @@ public class ClientWhatsCopernic {
                         System.out.println(miembro);
                     }
                 }
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                esperar(2000);
             }
 
             boolean esAdmin = verificarSiEsAdmin(nombreGrupo);
@@ -421,11 +501,7 @@ public class ClientWhatsCopernic {
                 }
             } else {
                 System.out.println("No eres administrador del grupo");
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                esperar(2000);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -439,11 +515,7 @@ public class ClientWhatsCopernic {
             return response.equals("true");
         } catch (Exception e) {
             System.out.println("Error al verificar si es admin");
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException ex) {
-                throw new RuntimeException(ex);
-            }
+            esperar(2000);
             return false;
         }
     }
@@ -461,11 +533,7 @@ public class ClientWhatsCopernic {
             } else {
                 System.out.println("Error al agregar el usuario");
             }
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            esperar(2000);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -484,11 +552,7 @@ public class ClientWhatsCopernic {
             } else {
                 System.out.println("Error al eliminar el usuario");
             }
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            esperar(2000);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -517,11 +581,7 @@ public class ClientWhatsCopernic {
             } else {
                 System.out.println("Error al modificar los permisos");
             }
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            esperar(2000);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -538,11 +598,7 @@ public class ClientWhatsCopernic {
             } else {
                 System.out.println(response);
             }
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            esperar(2000);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -569,6 +625,14 @@ public class ClientWhatsCopernic {
             }
         }
         return opcion;
+    }
+
+    public static void esperar(int tiempo) {
+        try {
+            Thread.sleep(tiempo);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     static class ClientConfiguration {
