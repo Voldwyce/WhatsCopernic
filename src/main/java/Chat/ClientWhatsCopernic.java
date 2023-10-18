@@ -139,9 +139,11 @@ public class ClientWhatsCopernic {
         sc.nextLine();
         switch (opcion) {
             case 1:
+                listarUsuarios();
                 mensajeUsuario();
                 break;
             case 2:
+                listarGrupos();
                 mensajeGrupo();
                 break;
             default:

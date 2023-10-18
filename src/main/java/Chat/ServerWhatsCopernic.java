@@ -1118,10 +1118,7 @@ public class ServerWhatsCopernic {
                 out.writeUTF("Archivo no encontrado");
                 return false;
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        } catch (IOException e) {
+        } catch (SQLException | IOException e) {
             e.printStackTrace();
             return false;
         }
