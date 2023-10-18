@@ -93,7 +93,7 @@ public class ClientWhatsCopernic {
             System.out.println("1. Iniciar Sesión");
             System.out.println("2. Crear Cuenta");
             System.out.print("Elija una opción: ");
-            int opcion = sc.nextInt();
+            int opcion = verificarInput(sc);
             sc.nextLine();
 
             System.out.print("Usuario: ");
