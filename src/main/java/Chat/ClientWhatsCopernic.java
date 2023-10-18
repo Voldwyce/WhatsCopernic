@@ -28,15 +28,16 @@ public class ClientWhatsCopernic {
             System.out.println();
             System.out.println("Menú de opciones");
             System.out.println("1. Listar usuarios");
-            System.out.println("2. Enviar mensaje");
-            System.out.println("3. Recibir mensaje");
-            System.out.println("4. Enviar archivo");
-            System.out.println("5. Ver archivos");
-            System.out.println("6. Recibir archivo");
-            System.out.println("7. Crear grupo");
-            System.out.println("8. Gestionar grupo");
-            System.out.println("9. Eliminar grupo");
-            System.out.println("10. Salir");
+            System.out.println("2. Listar grupos");
+            System.out.println("3. Enviar mensaje");
+            System.out.println("4. Recibir mensaje");
+            System.out.println("5. Enviar archivo");
+            System.out.println("6. Ver archivos");
+            System.out.println("7. Recibir archivo");
+            System.out.println("8. Crear grupo");
+            System.out.println("9. Gestionar grupo");
+            System.out.println("10. Eliminar grupo");
+            System.out.println("11. Salir");
             int opcion = verificarInput(sc);
             sc.nextLine();
 
@@ -45,32 +46,34 @@ public class ClientWhatsCopernic {
                     listarUsuarios();
                     break;
                 case 2:
+                    listarGrupos();
+                case 3:
                     enviarMensaje();
                     break;
-                case 3:
+                case 4:
                     listarMensaje();
                     break;
-                case 4:
+                case 5:
                     enviarArchivo();
                     break;
-                case 5:
+                case 6:
                     listarArchivos();
                     break;
-                case 6:
+                case 7:
                     recibirArchivo();
                     break;
-                case 7:
-                    crearGrupo();
-                    break;
                 case 8:
-                    listarGrupos();
-                    gestionarGrupo();
+                    crearGrupo();
                     break;
                 case 9:
                     listarGrupos();
-                    eliminarGrupo();
+                    gestionarGrupo();
                     break;
                 case 10:
+                    listarGrupos();
+                    eliminarGrupo();
+                    break;
+                case 11:
                     logout();
                     continuar = false;
                     break;
@@ -194,9 +197,11 @@ public class ClientWhatsCopernic {
         sc.nextLine();
         switch (opcion) {
             case 1:
+                listarUsuarios();
                 listarMensajesUsuario();
                 break;
             case 2:
+                listarGrupos();
                 listarMensajesGrupo();
                 break;
             default:
@@ -211,7 +216,7 @@ public class ClientWhatsCopernic {
             System.out.print("Recibir mensajes de: ");
             String destinatario = sc.nextLine();
 
-            out.writeUTF("listarmensajes " + destinatario );
+            out.writeUTF("listarmensajes " + destinatario);
 
             String respuestaServidor = in.readUTF();
             System.out.println(respuestaServidor);
@@ -227,7 +232,7 @@ public class ClientWhatsCopernic {
             System.out.print("Recibir mensajes de: ");
             String destinatario = sc.nextLine();
 
-            out.writeUTF("listarmensajesgrupo " + destinatario );
+            out.writeUTF("listarmensajesgrupo " + destinatario);
 
             String respuestaServidor = in.readUTF();
             System.out.println(respuestaServidor);
@@ -321,6 +326,7 @@ public class ClientWhatsCopernic {
             }
         }
     }
+
     private static void enviarArchivoGrupo() {
         try {
             System.out.print("Nombre del grupo: ");
@@ -355,8 +361,8 @@ public class ClientWhatsCopernic {
     }
 
 
-    public static void listarArchivos(){
-        try{
+    public static void listarArchivos() {
+        try {
             out.writeUTF("listararchivos");
             String response = in.readUTF();
             if (response.equals("Comando incorrecto")) {
@@ -374,11 +380,12 @@ public class ClientWhatsCopernic {
                     e.printStackTrace();
                 }
             }
-        }catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
 
         }
     }
+
     public static void recibirArchivo() {
         try {
             System.out.print("Nombre del archivo: ");
@@ -420,9 +427,6 @@ public class ClientWhatsCopernic {
     }
 
 
-
-
-
     private static void crearGrupo() {
         try {
             System.out.print("Nombre del grupo: ");
@@ -442,7 +446,7 @@ public class ClientWhatsCopernic {
 
     private static void listarGrupos() {
         try {
-            out.writeUTF("listargrupos");
+            out.writeUTF("listargrupos ");
             String response = in.readUTF();
             if (response.equals("Comando incorrecto")) {
                 System.out.println("Error al listar grupos");
@@ -605,6 +609,7 @@ public class ClientWhatsCopernic {
             e.printStackTrace();
         }
     }
+
     public static void logout() {
         try {
             out.writeUTF("logout");
@@ -614,6 +619,7 @@ public class ClientWhatsCopernic {
             e.printStackTrace();
         }
     }
+
     public static int verificarInput(Scanner sc) {
         System.out.print("Elije una opción: ");
         int opcion;
