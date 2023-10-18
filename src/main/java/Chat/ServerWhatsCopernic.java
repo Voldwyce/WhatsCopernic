@@ -472,7 +472,7 @@ public class ServerWhatsCopernic {
             }
         }
 
-        public static boolean enviarMensaje(int remitenteId, String destinoUsuario, String mensaje, HashMap<Integer, String> clients) {
+        public synchronized boolean enviarMensaje(int remitenteId, String destinoUsuario, String mensaje, HashMap<Integer, String> clients) {
             try {
                 int idRemitente = obtenerIdUsuarioDesdeDB(clients.get(remitenteId), cn);
                 int idDestinatario = obtenerIdUsuarioDesdeDB(destinoUsuario, cn);
@@ -492,7 +492,7 @@ public class ServerWhatsCopernic {
             }
         }
 
-        public static boolean enviarMensajeGrupo(int remitenteId, String destinoGrupo, String mensaje, HashMap<Integer, String> clients) {
+        public synchronized static boolean enviarMensajeGrupo(int remitenteId, String destinoGrupo, String mensaje, HashMap<Integer, String> clients) {
             try {
                 int idRemitente = obtenerIdUsuarioDesdeDB(clients.get(remitenteId), cn);
                 String verificacionQuery = "SELECT id_grupo FROM grupos WHERE grp_nombre = ?";
@@ -535,7 +535,7 @@ public class ServerWhatsCopernic {
         }
     }
 
-    public static String listarMensajesUsuario(int remitenteId, String nombreUsuario, HashMap<Integer, String> clients) {
+    public synchronized static String listarMensajesUsuario(int remitenteId, String nombreUsuario, HashMap<Integer, String> clients) {
         try {
             int idRemitente = obtenerIdUsuarioDesdeDB(clients.get(remitenteId), cn);
             int idDestinatario = obtenerIdUsuarioDesdeDB(nombreUsuario, cn);
@@ -564,7 +564,7 @@ public class ServerWhatsCopernic {
         }
     }
 
-    public static String listarMensajesGrupo(int remitenteId, String nombreGrupo, HashMap<Integer, String> clients) {
+    public synchronized static String listarMensajesGrupo(int remitenteId, String nombreGrupo, HashMap<Integer, String> clients) {
         try {
             int idRemitente = obtenerIdUsuarioDesdeDB(clients.get(remitenteId), cn);
             String verificacionQuery = "SELECT id_grupo FROM grupos WHERE grp_nombre = ?";
@@ -980,7 +980,7 @@ public class ServerWhatsCopernic {
             return false;
         }
     }
-    public static String listarArchivos(int clientID, HashMap<Integer, String> clients) {
+    public synchronized static String listarArchivos(int clientID, HashMap<Integer, String> clients) {
         try {
             int idUsuario = obtenerIdUsuarioDesdeDB(clients.get(clientID), cn);
             //listar archivo de grupos
@@ -1113,7 +1113,7 @@ public class ServerWhatsCopernic {
                 int idGrupo = resultSet.getInt("id_grupo");
 
                 // Divide la ruta completa para obtener el nombre del archivo
-                String[] rutaPartes = archivo.split("\\\\");
+                String[] rutaPartes = archivo.split("//");
                 String nombreArchivo = rutaPartes[rutaPartes.length - 1];
 
                 // Nombre archivo = current mili time
@@ -1148,7 +1148,7 @@ public class ServerWhatsCopernic {
         }
     }
     //descargar archivo por nombre
-    public static boolean recibirArchivo(int clientID, String archivo, DataOutputStream out, HashMap<Integer, String> clients) {
+    public synchronized static boolean recibirArchivo(int clientID, String archivo, DataOutputStream out, HashMap<Integer, String> clients) {
         String[] archivos = listarArchivos(clientID, clients).split("[\\s\\n]+");//regex
         try {
             //descargar archivo si esta en el string archivos
@@ -1188,6 +1188,7 @@ public class ServerWhatsCopernic {
                 }
             }
         } catch (SQLException | IOException e) {
+            System.out.println("Error al recibir el archivo");
             e.printStackTrace();
             return false;
         }
