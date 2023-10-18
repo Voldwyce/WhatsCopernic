@@ -283,7 +283,7 @@ public class ServerWhatsCopernic {
                             if (partes.length > 2) {
                                 out.writeUTF("Comando incorrecto");
                             } else {
-                                String grupos = listarGrupos();
+                                String grupos = listarGrupos(clientId, clients);
                                 out.writeUTF(grupos);
                             }
                             break;
@@ -632,18 +632,22 @@ public class ServerWhatsCopernic {
         }
     }
 
-    private synchronized static String listarGrupos() {
+    private synchronized static String listarGrupos(int clientID, HashMap<Integer, String> clients) {
+        int idUsuario = obtenerIdUsuarioDesdeDB(clients.get(clientID), cn);
         try {
-            String query = "SELECT grp_nombre FROM grupos";
+
+            // Buscamos los grupos a los que pertenezca el usuario
+            String query = "SELECT grp_nombre FROM grupos AS g INNER JOIN grp_usuarios AS u ON g.id_grupo = u.id_grupo WHERE u.id_usuario = ?";
             PreparedStatement preparedStatement = cn.prepareStatement(query);
+            preparedStatement.setInt(1, idUsuario);
             ResultSet resultSet = preparedStatement.executeQuery();
 
-            StringBuilder grupos = new StringBuilder("Grupos:\n");
-
+            StringBuilder grupos = new StringBuilder();
             while (resultSet.next()) {
                 String grupo = resultSet.getString("grp_nombre");
                 grupos.append(grupo).append("\n");
             }
+
             return grupos.toString();
         } catch (SQLException e) {
             e.printStackTrace();
