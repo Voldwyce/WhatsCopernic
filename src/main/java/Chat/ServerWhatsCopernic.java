@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.file.*;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.security.MessageDigest;
 import java.util.Properties;
@@ -973,18 +974,31 @@ public class ServerWhatsCopernic {
     public static String listarArchivos(int clientID, HashMap<Integer, String> clients) {
         try {
             int idUsuario = obtenerIdUsuarioDesdeDB(clients.get(clientID), cn);
-            //listar archivo y usuario que lo envio
-            String query = "SELECT nombre_archivo, username FROM archivos INNER JOIN usuarios ON archivos.id_usuario_in = usuarios.id_usuario WHERE id_usuario_out = ?";
+            //listar archivo de grupos
+            String query = "SELECT nombre_archivo, grp_nombre, username FROM archivos INNER JOIN usuarios ON archivos.id_usuario_in = usuarios.id_usuario INNER JOIN grupos ON archivos.id_grupo = grupos.id_grupo WHERE id_usuario_out = ? OR archivos.id_grupo IN (SELECT id_grupo FROM grp_usuarios WHERE id_usuario = ?)";
             PreparedStatement preparedStatement = cn.prepareStatement(query);
             preparedStatement.setInt(1, idUsuario);
+            preparedStatement.setInt(2, idUsuario);
             ResultSet resultSet = preparedStatement.executeQuery();
 
             StringBuilder archivos = new StringBuilder("Archivos:\n");
 
             while (resultSet.next()) {
-                String archivo = resultSet.getString("nombre_archivo");
+                String nombreArchivo = resultSet.getString("nombre_archivo");
+                String grupo = resultSet.getString("grp_nombre");
                 String usuario = resultSet.getString("username");
-                archivos.append(archivo).append(" - ").append(usuario).append("\n");
+                archivos.append(nombreArchivo).append(" (").append(usuario).append(" en ").append(grupo).append(")\n");
+            }
+            //listar archivo de usuarios
+            String query2 = "SELECT nombre_archivo, username FROM archivos INNER JOIN usuarios ON archivos.id_usuario_in = usuarios.id_usuario WHERE id_usuario_out = ?";
+            PreparedStatement preparedStatement2 = cn.prepareStatement(query2);
+            preparedStatement2.setInt(1, idUsuario);
+            ResultSet resultSet2 = preparedStatement2.executeQuery();
+
+            while (resultSet2.next()) {
+                String nombreArchivo = resultSet2.getString("nombre_archivo");
+                String usuario = resultSet2.getString("username");
+                archivos.append(nombreArchivo).append(" (").append(usuario).append(")\n");
             }
             return archivos.toString();
 
@@ -993,6 +1007,7 @@ public class ServerWhatsCopernic {
             return "Error al listar archivos.";
         }
     }
+
 
     public synchronized static boolean enviarArchivoTodos(int clientId, String archivo, int permisos, HashMap<Integer, String> clients) {
         int idUsuario = obtenerIdUsuarioDesdeDB(clients.get(clientId), cn);
@@ -1088,47 +1103,49 @@ public class ServerWhatsCopernic {
     }
     //descargar archivo por nombre
     public static boolean recibirArchivo(int clientID, String archivo, DataOutputStream out, HashMap<Integer, String> clients) {
-        int idUsuario = obtenerIdUsuarioDesdeDB(clients.get(clientID), cn);
+        String[] archivos = listarArchivos(clientID, clients).split("[\\s\\n]+");//regex
         try {
-            String query = "SELECT ruta_archivo FROM archivos WHERE nombre_archivo = ? AND id_usuario_out = ?";
-            PreparedStatement preparedStatement = cn.prepareStatement(query);
-            preparedStatement.setString(1, archivo);
-            preparedStatement.setInt(2, idUsuario);
-            ResultSet resultSet = preparedStatement.executeQuery();
+            //descargar archivo si esta en el string archivos
+            for (String archivo1 : archivos) {
+                if (archivo1.contains(archivo)) {
+                    String query = "SELECT ruta_archivo FROM archivos WHERE nombre_archivo = ? ";
+                    PreparedStatement preparedStatement = cn.prepareStatement(query);
+                    preparedStatement.setString(1, archivo);
+                    ResultSet resultSet = preparedStatement.executeQuery();
 
-            if (resultSet.next()) {
-                String rutaArchivo = resultSet.getString("ruta_archivo");
-                File file = new File(rutaArchivo);
-                if (file.exists()) {
-                    out.writeUTF("Archivo");
-                    out.writeUTF(archivo);
-                    out.writeLong(file.length());
+                    if (resultSet.next()) {
+                        String rutaArchivo = resultSet.getString("ruta_archivo");
+                        File file = new File(rutaArchivo);
+                        if (file.exists()) {
+                            out.writeUTF("Archivo");
+                            out.writeUTF(archivo);
+                            out.writeLong(file.length());
 
-                    FileInputStream fileIn = new FileInputStream(file);
-                    byte[] buffer = new byte[4096];
-                    int bytesRead;
+                            FileInputStream fileIn = new FileInputStream(file);
+                            byte[] buffer = new byte[4096];
+                            int bytesRead;
 
-                    while ((bytesRead = fileIn.read(buffer)) != -1) {
-                        out.write(buffer, 0, bytesRead);
+                            while ((bytesRead = fileIn.read(buffer)) != -1) {
+                                out.write(buffer, 0, bytesRead);
+                            }
+
+                            fileIn.close();
+                            return true;
+                        } else {
+                            out.writeUTF("Archivo no encontrado");
+                            return false;
+                        }
+                    } else {
+                        out.writeUTF("Archivo no encontrado");
+                        return false;
                     }
-
-                    fileIn.close();
-                    return true;
-                } else {
-                    out.writeUTF("Archivo no encontrado");
-                    return false;
                 }
-            } else {
-                out.writeUTF("Archivo no encontrado");
-                return false;
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        } catch (IOException e) {
+        } catch (SQLException | IOException e) {
             e.printStackTrace();
             return false;
         }
+        return false;
     }
 
     public synchronized static String listarUsuarios(HashMap<Integer, String> clients) {
