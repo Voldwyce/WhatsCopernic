@@ -93,7 +93,7 @@ public class ServerWhatsCopernic {
         private final Socket clientSocket;
         private final HashMap<Integer, String> clients;
 
-        public ClientHandler(int clientId, Socket clientSocket, HashMap<Integer, String> clients) {
+        public ClientHandler (int clientId, Socket clientSocket, HashMap<Integer, String> clients) {
             this.clientId = clientId;
             this.clientSocket = clientSocket;
             this.clients = clients;
@@ -436,7 +436,7 @@ public class ServerWhatsCopernic {
             try {
                 String query = "SELECT * FROM usuarios WHERE username = ? AND pswd = ?";
                 PreparedStatement preparedStatement = cn.prepareStatement(query);
-                preparedStatement.setString(1, usuario);
+                preparedStatement.setString(1, usuario.toLowerCase());
                 preparedStatement.setString(2, pwd);
                 ResultSet result = preparedStatement.executeQuery();
 
