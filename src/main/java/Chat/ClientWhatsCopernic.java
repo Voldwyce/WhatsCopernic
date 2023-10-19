@@ -87,9 +87,7 @@ public class ClientWhatsCopernic {
 
     public static boolean iniciarApp() {
         try {
-            sk = new Socket(clientConfig.ipServidor, clientConfig.portServidor);
-            out = new DataOutputStream(sk.getOutputStream());
-            in = new DataInputStream(sk.getInputStream());
+
 
             System.out.println("1. Iniciar Sesión");
             System.out.println("2. Crear Cuenta");
@@ -100,6 +98,10 @@ public class ClientWhatsCopernic {
             String usuario = sc.nextLine().toLowerCase();
             System.out.print("Contraseña: ");
             String password = sc.nextLine();
+
+            sk = new Socket(clientConfig.ipServidor, clientConfig.portServidor);
+            out = new DataOutputStream(sk.getOutputStream());
+            in = new DataInputStream(sk.getInputStream());
 
             if (opcion == 1) {
                 out.writeUTF("login " + usuario + " " + password);
@@ -269,7 +271,6 @@ public class ClientWhatsCopernic {
     }
 
 
-
     private static void enviarArchivoUsuario() {
         try {
             System.out.println("Enviar a: ");
@@ -292,11 +293,7 @@ public class ClientWhatsCopernic {
                 } else {
                     System.out.println("Error al enviar el archivo");
                 }
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                esperar(2000);
             } else if (permisos == 1) {
                 System.out.print("Nombre del usuario: ");
                 String nombreUsuario = sc.nextLine();
@@ -314,21 +311,13 @@ public class ClientWhatsCopernic {
                 } else {
                     System.out.println("Error al enviar el archivo");
                 }
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                esperar(2000);
             } else {
                 System.out.println("Opción inválida");
             }
         } catch (IOException e) {
             System.out.println("Error al enviar el archivo");
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException ex) {
-                throw new RuntimeException(ex);
-            }
+            esperar(2000);
         }
     }
 
@@ -350,18 +339,10 @@ public class ClientWhatsCopernic {
             } else {
                 System.out.println("Error al enviar el archivo");
             }
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            esperar(2000);
         } catch (IOException e) {
             System.out.println("Error al enviar el archivo");
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException ex) {
-                throw new RuntimeException(ex);
-            }
+            esperar(2000);
         }
     }
 
@@ -382,18 +363,10 @@ public class ClientWhatsCopernic {
             } else {
                 System.out.println("Error al enviar el archivo");
             }
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            esperar(2000);
         } catch (IOException e) {
             System.out.println("Error al enviar el archivo");
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException ex) {
-                throw new RuntimeException(ex);
-            }
+            esperar(2000);
         }
     }
 
@@ -410,11 +383,7 @@ public class ClientWhatsCopernic {
                         System.out.println(archivo);
                     }
                 }
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                esperar(2000);
             }
         } catch (IOException e) {
             e.printStackTrace();
