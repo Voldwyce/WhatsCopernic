@@ -945,7 +945,7 @@ public class ServerWhatsCopernic {
                 int idDestinatario = resultSet.getInt("id_usuario");
 
                 // Divide la ruta completa para obtener el nombre del archivo
-                String[] rutaPartes = rutaArchivoCompleta.split("//");
+                String[] rutaPartes = rutaArchivoCompleta.split("/");
                 String nombreArchivo = rutaPartes[rutaPartes.length - 1];
 
                 // Nombre archivo = current mili time
@@ -966,7 +966,7 @@ public class ServerWhatsCopernic {
                 insertStatement.setInt(1, idUsuario);
                 insertStatement.setString(2, rutaServidor);
                 insertStatement.setString(3, nombreArchivo);
-                insertStatement.setInt(4, permisos);
+                insertStatement.setInt(4, 1);
                 insertStatement.setInt(5, idDestinatario);
 
                 int rowCount = insertStatement.executeUpdate();
@@ -1037,12 +1037,8 @@ public class ServerWhatsCopernic {
     public synchronized static boolean enviarArchivoTodos(int clientId, String archivo, int permisos, HashMap<Integer, String> clients) {
         int idUsuario = obtenerIdUsuarioDesdeDB(clients.get(clientId), cn);
         try {
-            String query = "SELECT id_usuario FROM usuarios";
-            PreparedStatement preparedStatement = cn.prepareStatement(query);
-            ResultSet resultSet = preparedStatement.executeQuery();
-
             // Divide la ruta completa para obtener el nombre del archivo
-            String[] rutaPartes = archivo.split("\\\\");
+            String[] rutaPartes = archivo.split("/");
             String nombreArchivo = rutaPartes[rutaPartes.length - 1];
 
             // Nombre archivo = current mili time
@@ -1058,22 +1054,18 @@ public class ServerWhatsCopernic {
             Path destinoPath = Paths.get(rutaServidor);
             Files.copy(origenPath, destinoPath, StandardCopyOption.REPLACE_EXISTING);
 
-            while (resultSet.next()) {
-                int idDestinatario = resultSet.getInt("id_usuario");
-
-                String insertSql = "INSERT INTO archivos (id_usuario_in, ruta_archivo, nombre_archivo, permisos, id_usuario_out) VALUES (?, ?, ?, ?, ?)";
+                String insertSql = "INSERT INTO archivos (id_usuario_in, ruta_archivo, nombre_archivo, permisos) VALUES (?, ?, ?, ?)";
                 PreparedStatement insertStatement = cn.prepareStatement(insertSql);
                 insertStatement.setInt(1, idUsuario);
                 insertStatement.setString(2, rutaServidor);
                 insertStatement.setString(3, nombreArchivo);
-                insertStatement.setInt(4, permisos);
-                insertStatement.setInt(5, idDestinatario);
+                insertStatement.setInt(4, 0);
 
                 int rowCount = insertStatement.executeUpdate();
                 if (rowCount <= 0) {
                     return false;
                 }
-            }
+
             return true;
         } catch (SQLException | IOException e) {
             e.printStackTrace();
