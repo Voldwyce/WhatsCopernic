@@ -980,6 +980,7 @@ public class ServerWhatsCopernic {
             return false;
         }
     }
+
     public synchronized static String listarArchivos(int clientID, HashMap<Integer, String> clients) {
         try {
             int idUsuario = obtenerIdUsuarioDesdeDB(clients.get(clientID), cn);
@@ -1009,7 +1010,22 @@ public class ServerWhatsCopernic {
                 String usuario = resultSet2.getString("username");
                 archivos.append(nombreArchivo).append(" (").append(usuario).append(")\n");
             }
+
+            // Listar los archivos que tengan un permiso 0 si tiene 4 y estoy en ese grupo
+            String query3 = "SELECT nombre_archivo, grp_nombre, username FROM archivos INNER JOIN usuarios ON archivos.id_usuario_in = usuarios.id_usuario INNER JOIN grupos ON archivos.id_grupo = grupos.id_grupo WHERE archivos.permisos = 0 AND archivos.id_grupo IN (SELECT id_grupo FROM grp_usuarios WHERE id_usuario = ?)";
+            PreparedStatement preparedStatement3 = cn.prepareStatement(query3);
+            preparedStatement3.setInt(1, idUsuario);
+            ResultSet resultSet3 = preparedStatement3.executeQuery();
+
+            while (resultSet3.next()) {
+                String nombreArchivo = resultSet3.getString("nombre_archivo");
+                String grupo = resultSet3.getString("grp_nombre");
+                String usuario = resultSet3.getString("username");
+                archivos.append(nombreArchivo).append(" (").append(usuario).append(" en ").append(grupo).append(")\n");
+            }
+
             return archivos.toString();
+
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -1155,6 +1171,7 @@ public class ServerWhatsCopernic {
             return false;
         }
     }
+
     //descargar archivo por nombre
     public synchronized static boolean recibirArchivo(int clientID, String archivo, DataOutputStream out, HashMap<Integer, String> clients) {
         String[] archivos = listarArchivos(clientID, clients).split("[\\s\\n]+");//regex
