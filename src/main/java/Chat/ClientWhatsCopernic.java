@@ -658,17 +658,14 @@ public class ClientWhatsCopernic {
 
     public static int verificarInput(Scanner sc) {
         System.out.print("Elije una opción: ");
-        int opcion;
-        while (true) {
-            if (sc.hasNextInt()) {
-                opcion = sc.nextInt();
-                break;
-            } else {
-                System.out.print("Opción no válida. \nElije una opción:  ");
-                sc.nextLine();
-            }
+        // El programa pide un int pero si se ingresa un String, se captura la excepción y se vuelve a pedir el input
+        try {
+            return sc.nextInt();
+        } catch (Exception e) {
+            System.out.println("Opción inválida");
+            sc.nextLine();
+            return verificarInput(sc);
         }
-        return opcion;
     }
 
     public static void esperar(int tiempo) {
