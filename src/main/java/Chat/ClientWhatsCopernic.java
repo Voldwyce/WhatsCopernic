@@ -47,6 +47,7 @@ public class ClientWhatsCopernic {
                     break;
                 case 2:
                     listarGrupos();
+                    break;
                 case 3:
                     enviarMensaje();
                     break;
