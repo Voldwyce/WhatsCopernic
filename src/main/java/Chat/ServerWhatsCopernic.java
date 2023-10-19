@@ -1011,19 +1011,32 @@ public class ServerWhatsCopernic {
                 archivos.append(nombreArchivo).append(" (").append(usuario).append(")\n");
             }
 
-            // Listar los archivos que tengan un permiso 0 si tiene 4 y estoy en ese grupo
-            String query3 = "SELECT nombre_archivo, grp_nombre, username FROM archivos INNER JOIN usuarios ON archivos.id_usuario_in = usuarios.id_usuario INNER JOIN grupos ON archivos.id_grupo = grupos.id_grupo WHERE archivos.permisos = 0 AND archivos.id_grupo IN (SELECT id_grupo FROM grp_usuarios WHERE id_usuario = ?)";
+            // Listar los archivos que tengan un permiso 0
+
+            String query3 = "SELECT nombre_archivo, username FROM archivos INNER JOIN usuarios ON archivos.id_usuario_in = usuarios.id_usuario WHERE permisos = 0";
             PreparedStatement preparedStatement3 = cn.prepareStatement(query3);
-            preparedStatement3.setInt(1, idUsuario);
             ResultSet resultSet3 = preparedStatement3.executeQuery();
 
             while (resultSet3.next()) {
                 String nombreArchivo = resultSet3.getString("nombre_archivo");
-                String grupo = resultSet3.getString("grp_nombre");
                 String usuario = resultSet3.getString("username");
+                archivos.append(nombreArchivo).append(" (").append(usuario).append(")\n");
+            }
+
+            // Listar los archivos que tengan un permiso 4, si pertenezemos al grupo
+            String query4 = "SELECT nombre_archivo, grp_nombre, username FROM archivos INNER JOIN usuarios ON archivos.id_usuario_in = usuarios.id_usuario INNER JOIN grupos ON archivos.id_grupo = grupos.id_grupo WHERE permisos = 4 AND archivos.id_grupo IN (SELECT id_grupo FROM grp_usuarios WHERE id_usuario = ?)";
+            PreparedStatement preparedStatement4 = cn.prepareStatement(query4);
+            preparedStatement4.setInt(1, idUsuario);
+            ResultSet resultSet4 = preparedStatement4.executeQuery();
+
+            while (resultSet4.next()) {
+                String nombreArchivo = resultSet4.getString("nombre_archivo");
+                String grupo = resultSet4.getString("grp_nombre");
+                String usuario = resultSet4.getString("username");
                 archivos.append(nombreArchivo).append(" (").append(usuario).append(" en ").append(grupo).append(")\n");
             }
 
+            // Resultado de las 4 consultas
             return archivos.toString();
 
 
