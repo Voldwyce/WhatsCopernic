@@ -528,13 +528,13 @@ public class ClientWhatsCopernic {
                 sc.nextLine();
                 switch (opcion) {
                     case 1:
-                        agregarUsuarioGrupo();
+                        agregarUsuarioGrupo(nombreGrupo);
                         break;
                     case 2:
-                        eliminarUsuarioGrupo();
+                        eliminarUsuarioGrupo(nombreGrupo);
                         break;
                     case 3:
-                        darQuitarPermisos();
+                        darQuitarPermisos(nombreGrupo);
                         break;
                     default:
                         System.out.println("Opción inválida");
@@ -561,12 +561,10 @@ public class ClientWhatsCopernic {
         }
     }
 
-    private static void agregarUsuarioGrupo() {
+    private static void agregarUsuarioGrupo(String nombreGrupo) {
         try {
             System.out.print("Nombre del usuario: ");
             String nombreUsuario = sc.nextLine();
-            System.out.print("Nombre del grupo: ");
-            String nombreGrupo = sc.nextLine();
             out.writeUTF("agregarusuario " + nombreUsuario + " " + nombreGrupo);
             String response = in.readUTF();
             if (response.equals("true")) {
@@ -580,12 +578,10 @@ public class ClientWhatsCopernic {
         }
     }
 
-    private static void eliminarUsuarioGrupo() {
+    private static void eliminarUsuarioGrupo(String nombreGrupo) {
         try {
             System.out.print("Nombre del usuario: ");
             String nombreUsuario = sc.nextLine();
-            System.out.print("Nombre del grupo: ");
-            String nombreGrupo = sc.nextLine();
             out.writeUTF("eliminarusuario " + nombreUsuario + " " + nombreGrupo);
             String response = in.readUTF();
             if (response.equals("true")) {
@@ -599,12 +595,10 @@ public class ClientWhatsCopernic {
         }
     }
 
-    private static void darQuitarPermisos() {
+    private static void darQuitarPermisos(String nombreGrupo) {
         try {
             System.out.print("Nombre del usuario: ");
             String nombreUsuario = sc.nextLine();
-            System.out.print("Nombre del grupo: ");
-            String nombreGrupo = sc.nextLine();
             System.out.println("1. Dar permisos");
             System.out.println("2. Quitar permisos");
             int opcion = verificarInput(sc);
