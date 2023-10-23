@@ -47,6 +47,7 @@ public class ClientWhatsCopernic {
                     break;
                 case 2:
                     listarGrupos();
+                    break;
                 case 3:
                     enviarMensaje();
                     break;
@@ -86,6 +87,8 @@ public class ClientWhatsCopernic {
 
     public static boolean iniciarApp() {
         try {
+
+
             System.out.println("1. Iniciar Sesión");
             System.out.println("2. Crear Cuenta");
             int opcion = verificarInput(sc);
@@ -290,7 +293,7 @@ public class ClientWhatsCopernic {
                 } else {
                     System.out.println("Error al enviar el archivo");
                 }
-                esperar(2000);
+                esperar(500);
             } else if (permisos == 1) {
                 System.out.print("Nombre del usuario: ");
                 String nombreUsuario = sc.nextLine();
@@ -336,10 +339,10 @@ public class ClientWhatsCopernic {
             } else {
                 System.out.println("Error al enviar el archivo");
             }
-            esperar(2000);
+            esperar(500);
         } catch (IOException e) {
             System.out.println("Error al enviar el archivo");
-            esperar(2000);
+            esperar(500);
         }
     }
 
@@ -360,10 +363,10 @@ public class ClientWhatsCopernic {
             } else {
                 System.out.println("Error al enviar el archivo");
             }
-            esperar(2000);
+            esperar(500);
         } catch (IOException e) {
             System.out.println("Error al enviar el archivo");
-            esperar(2000);
+            esperar(500);
         }
     }
 
@@ -437,7 +440,7 @@ public class ClientWhatsCopernic {
             String response = in.readUTF();
             if (response.equals("true")) {
                 System.out.println("Grupo creado con éxito");
-                esperar(2000);
+                esperar(500);
             } else {
                 System.out.println("Error al crear el grupo");
             }
@@ -523,7 +526,7 @@ public class ClientWhatsCopernic {
             return response.equals("true");
         } catch (Exception e) {
             System.out.println("Error al verificar si es admin");
-            esperar(2000);
+            esperar(500);
             return false;
         }
     }
@@ -539,7 +542,7 @@ public class ClientWhatsCopernic {
             } else {
                 System.out.println("Error al agregar el usuario");
             }
-            esperar(2000);
+            esperar(500);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -556,7 +559,7 @@ public class ClientWhatsCopernic {
             } else {
                 System.out.println("Error al eliminar el usuario");
             }
-            esperar(2000);
+            esperar(500);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -572,18 +575,24 @@ public class ClientWhatsCopernic {
             sc.nextLine();
             if (opcion == 1) {
                 out.writeUTF("darpermisos " + nombreUsuario + " " + nombreGrupo);
+                String response = in.readUTF();
+                if (response.equals("true")) {
+                    System.out.println("Permisos concedido con éxito");
+                } else {
+                    System.out.println("Error al modificar los permisos");
+                }
             } else if (opcion == 2) {
                 out.writeUTF("quitarpermisos " + nombreUsuario + " " + nombreGrupo);
+                String response = in.readUTF();
+                if (response.equals("true")) {
+                    System.out.println("Permisos quitados con éxito");
+                } else {
+                    System.out.println("Error al modificar los permisos");
+                }
             } else {
                 System.out.println("Opción inválida");
             }
-            String response = in.readUTF();
-            if (response.equals("true")) {
-                System.out.println("Permisos modificados con éxito");
-            } else {
-                System.out.println("Error al modificar los permisos");
-            }
-            esperar(2000);
+            esperar(500);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -600,7 +609,7 @@ public class ClientWhatsCopernic {
             } else {
                 System.out.println(response);
             }
-            esperar(2000);
+            esperar(500);
         } catch (IOException e) {
             e.printStackTrace();
         }
