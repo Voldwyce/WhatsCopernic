@@ -135,7 +135,7 @@ public class ClientWhatsCopernic {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        esperar(2000);
+        esperar(1500);
     }
 
     public static void enviarMensaje() {
@@ -170,7 +170,7 @@ public class ClientWhatsCopernic {
 
             String respuestaServidor = in.readUTF();
             System.out.println(respuestaServidor);
-            esperar(500);
+            esperar(1000);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -187,7 +187,7 @@ public class ClientWhatsCopernic {
 
             String respuestaServidor = in.readUTF();
             System.out.println(respuestaServidor);
-            esperar(500);
+            esperar(1000);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -312,13 +312,13 @@ public class ClientWhatsCopernic {
                 } else {
                     System.out.println("Error al enviar el archivo");
                 }
-                esperar(500);
+                esperar(1500);
             } else {
                 System.out.println("Opción inválida");
             }
         } catch (IOException e) {
             System.out.println("Error al enviar el archivo");
-            esperar(500);
+            esperar(1500);
         }
     }
 
