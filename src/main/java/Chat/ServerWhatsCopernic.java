@@ -93,7 +93,7 @@ public class ServerWhatsCopernic {
         private final Socket clientSocket;
         private final HashMap<Integer, String> clients;
 
-        public ClientHandler (int clientId, Socket clientSocket, HashMap<Integer, String> clients) {
+        public ClientHandler(int clientId, Socket clientSocket, HashMap<Integer, String> clients) {
             this.clientId = clientId;
             this.clientSocket = clientSocket;
             this.clients = clients;
@@ -403,14 +403,15 @@ public class ServerWhatsCopernic {
                             break;
 
                         case "recibirarchivo":
-                            if (partes.length != 2) {
+                            if (partes.length > 2) {
                                 out.writeUTF("Comando incorrecto");
                             } else {
                                 String archivoSolicitado = partes[1];
                                 if (recibirArchivo(clientId, archivoSolicitado, out, clients)) {
                                     System.out.println("Archivo enviado con éxito");
                                 } else {
-                                    System.out.println("Error al enviar el archivo");
+                                    System.out.println("Error al recibir el archivo");
+                                    out.writeUTF("Archivo no encontrado");
                                 }
                             }
                             break;
@@ -476,15 +477,19 @@ public class ServerWhatsCopernic {
             try {
                 int idRemitente = obtenerIdUsuarioDesdeDB(clients.get(remitenteId), cn);
                 int idDestinatario = obtenerIdUsuarioDesdeDB(destinoUsuario, cn);
+                if(idRemitente >= 0 && idDestinatario >= 0){
+                    String insertSql = "INSERT INTO mensajes (id_usuario_in, mensaje, id_usuario_out) VALUES (?, ?, ?)";
+                    PreparedStatement insertStatement = cn.prepareStatement(insertSql);
+                    insertStatement.setInt(1, idRemitente);
+                    insertStatement.setString(2, mensaje);
+                    insertStatement.setInt(3, idDestinatario);
 
-                String insertSql = "INSERT INTO mensajes (id_usuario_in, mensaje, id_usuario_out) VALUES (?, ?, ?)";
-                PreparedStatement insertStatement = cn.prepareStatement(insertSql);
-                insertStatement.setInt(1, idRemitente);
-                insertStatement.setString(2, mensaje);
-                insertStatement.setInt(3, idDestinatario);
-
-                int rowCount = insertStatement.executeUpdate();
-                return rowCount > 0;
+                    int rowCount = insertStatement.executeUpdate();
+                    return rowCount > 0;
+                }
+                else{
+                    return false;
+                }
             } catch (SQLException e) {
                 System.out.println("Error al enviar el mensaje");
                 e.printStackTrace();
@@ -495,36 +500,25 @@ public class ServerWhatsCopernic {
         public synchronized static boolean enviarMensajeGrupo(int remitenteId, String destinoGrupo, String mensaje, HashMap<Integer, String> clients) {
             try {
                 int idRemitente = obtenerIdUsuarioDesdeDB(clients.get(remitenteId), cn);
-                String verificacionQuery = "SELECT id_grupo FROM grupos WHERE grp_nombre = ?";
-                PreparedStatement verificacionStatement = cn.prepareStatement(verificacionQuery);
-                verificacionStatement.setString(1, destinoGrupo);
-                ResultSet verificacionResult = verificacionStatement.executeQuery();
+                int idGrupo = obtenerIdGrupoDesdeDB(destinoGrupo, cn);
 
-                if (verificacionResult.next()) {
-                    int idGrupoDestinatario = verificacionResult.getInt("id_grupo");
+                String pertenenciaQuery = "SELECT COUNT(*) FROM grp_usuarios WHERE id_usuario = ? AND id_grupo = ?";
+                PreparedStatement pertenenciaStatement = cn.prepareStatement(pertenenciaQuery);
+                pertenenciaStatement.setInt(1, idRemitente);
+                pertenenciaStatement.setInt(2, idGrupo);
+                ResultSet pertenenciaResult = pertenenciaStatement.executeQuery();
 
-                    String pertenenciaQuery = "SELECT COUNT(*) FROM grp_usuarios WHERE id_usuario = ? AND id_grupo = ?";
-                    PreparedStatement pertenenciaStatement = cn.prepareStatement(pertenenciaQuery);
-                    pertenenciaStatement.setInt(1, idRemitente);
-                    pertenenciaStatement.setInt(2, idGrupoDestinatario);
-                    ResultSet pertenenciaResult = pertenenciaStatement.executeQuery();
+                if (pertenenciaResult.next() && pertenenciaResult.getInt(1) == 1) {
+                    // El remitente pertenece al grupo, ahora puedes insertar el mensaje
+                    String insertSql = "INSERT INTO mensajes (id_usuario_in, mensaje, id_grupo) VALUES (?, ?, ?)";
+                    PreparedStatement insertStatement = cn.prepareStatement(insertSql);
+                    insertStatement.setInt(1, idRemitente);
+                    insertStatement.setString(2, mensaje);
+                    insertStatement.setInt(3, idGrupo);
 
-                    if (pertenenciaResult.next() && pertenenciaResult.getInt(1) == 1) {
-                        // El remitente pertenece al grupo, ahora puedes insertar el mensaje
-                        String insertSql = "INSERT INTO mensajes (id_usuario_in, mensaje, id_grupo) VALUES (?, ?, ?)";
-                        PreparedStatement insertStatement = cn.prepareStatement(insertSql);
-                        insertStatement.setInt(1, idRemitente);
-                        insertStatement.setString(2, mensaje);
-                        insertStatement.setInt(3, idGrupoDestinatario);
-
-                        int rowCount = insertStatement.executeUpdate();
-                        return rowCount > 0;
-                    } else {
-                        // El remitente no pertenece al grupo
-                        return false;
-                    }
+                    int rowCount = insertStatement.executeUpdate();
+                    return rowCount > 0;
                 } else {
-                    // El grupo destino no existe
                     return false;
                 }
             } catch (SQLException e) {
@@ -1067,17 +1061,17 @@ public class ServerWhatsCopernic {
             Path destinoPath = Paths.get(rutaServidor);
             Files.copy(origenPath, destinoPath, StandardCopyOption.REPLACE_EXISTING);
 
-                String insertSql = "INSERT INTO archivos (id_usuario_in, ruta_archivo, nombre_archivo, permisos) VALUES (?, ?, ?, ?)";
-                PreparedStatement insertStatement = cn.prepareStatement(insertSql);
-                insertStatement.setInt(1, idUsuario);
-                insertStatement.setString(2, rutaServidor);
-                insertStatement.setString(3, nombreArchivo);
-                insertStatement.setInt(4, 0);
+            String insertSql = "INSERT INTO archivos (id_usuario_in, ruta_archivo, nombre_archivo, permisos) VALUES (?, ?, ?, ?)";
+            PreparedStatement insertStatement = cn.prepareStatement(insertSql);
+            insertStatement.setInt(1, idUsuario);
+            insertStatement.setString(2, rutaServidor);
+            insertStatement.setString(3, nombreArchivo);
+            insertStatement.setInt(4, 0);
 
-                int rowCount = insertStatement.executeUpdate();
-                if (rowCount <= 0) {
-                    return false;
-                }
+            int rowCount = insertStatement.executeUpdate();
+            if (rowCount <= 0) {
+                return false;
+            }
 
             return true;
         } catch (SQLException | IOException e) {

@@ -61,6 +61,7 @@ public class ClientWhatsCopernic {
                     listarArchivos();
                     break;
                 case 7:
+                    listarArchivos();
                     recibirArchivo();
                     break;
                 case 8:
