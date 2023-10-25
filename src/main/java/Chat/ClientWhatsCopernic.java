@@ -138,6 +138,26 @@ public class ClientWhatsCopernic {
         esperar(1500);
     }
 
+    private static void listarGrupos() {
+        try {
+            out.writeUTF("listargrupos ");
+            String response = in.readUTF();
+            if (response.equals("Comando incorrecto")) {
+                System.out.println("Error al listar grupos");
+            } else {
+                String[] grupos = response.split(", ");
+                for (String grupo : grupos) {
+                    if (!grupo.equals("null")) {
+                        System.out.println(grupo);
+                    }
+                }
+                esperar(2000);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void enviarMensaje() {
         System.out.println("1. Mensaje a un usuario");
         System.out.println("2. Mensaje a un grupo");
@@ -449,26 +469,6 @@ public class ClientWhatsCopernic {
                 esperar(500);
             } else {
                 System.out.println("Error al crear el grupo");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void listarGrupos() {
-        try {
-            out.writeUTF("listargrupos ");
-            String response = in.readUTF();
-            if (response.equals("Comando incorrecto")) {
-                System.out.println("Error al listar grupos");
-            } else {
-                String[] grupos = response.split(", ");
-                for (String grupo : grupos) {
-                    if (!grupo.equals("null")) {
-                        System.out.println(grupo);
-                    }
-                }
-                esperar(2000);
             }
         } catch (IOException e) {
             e.printStackTrace();
