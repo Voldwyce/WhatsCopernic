@@ -47,6 +47,7 @@ public class ClientWhatsCopernic {
                     break;
                 case 2:
                     listarGrupos();
+                    break;
                 case 3:
                     enviarMensaje();
                     break;
@@ -60,6 +61,7 @@ public class ClientWhatsCopernic {
                     listarArchivos();
                     break;
                 case 7:
+                    listarArchivos();
                     recibirArchivo();
                     break;
                 case 8:
@@ -86,9 +88,7 @@ public class ClientWhatsCopernic {
 
     public static boolean iniciarApp() {
         try {
-            sk = new Socket(clientConfig.ipServidor, clientConfig.portServidor);
-            out = new DataOutputStream(sk.getOutputStream());
-            in = new DataInputStream(sk.getInputStream());
+
 
             System.out.println("1. Iniciar Sesión");
             System.out.println("2. Crear Cuenta");
@@ -99,6 +99,10 @@ public class ClientWhatsCopernic {
             String usuario = sc.nextLine().toLowerCase();
             System.out.print("Contraseña: ");
             String password = sc.nextLine();
+
+            sk = new Socket(clientConfig.ipServidor, clientConfig.portServidor);
+            out = new DataOutputStream(sk.getOutputStream());
+            in = new DataInputStream(sk.getInputStream());
 
             if (opcion == 1) {
                 out.writeUTF("login " + usuario + " " + password);
@@ -131,7 +135,7 @@ public class ClientWhatsCopernic {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        esperar(2000);
+        esperar(1500);
     }
 
     public static void enviarMensaje() {
@@ -166,7 +170,7 @@ public class ClientWhatsCopernic {
 
             String respuestaServidor = in.readUTF();
             System.out.println(respuestaServidor);
-            esperar(2000);
+            esperar(1000);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -183,7 +187,7 @@ public class ClientWhatsCopernic {
 
             String respuestaServidor = in.readUTF();
             System.out.println(respuestaServidor);
-            esperar(2000);
+            esperar(1000);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -268,7 +272,6 @@ public class ClientWhatsCopernic {
     }
 
 
-
     private static void enviarArchivoUsuario() {
         try {
             System.out.println("Enviar a: ");
@@ -291,11 +294,7 @@ public class ClientWhatsCopernic {
                 } else {
                     System.out.println("Error al enviar el archivo");
                 }
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                esperar(500);
             } else if (permisos == 1) {
                 System.out.print("Nombre del usuario: ");
                 String nombreUsuario = sc.nextLine();
@@ -313,21 +312,13 @@ public class ClientWhatsCopernic {
                 } else {
                     System.out.println("Error al enviar el archivo");
                 }
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                esperar(1500);
             } else {
                 System.out.println("Opción inválida");
             }
         } catch (IOException e) {
             System.out.println("Error al enviar el archivo");
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException ex) {
-                throw new RuntimeException(ex);
-            }
+            esperar(1500);
         }
     }
 
@@ -349,18 +340,10 @@ public class ClientWhatsCopernic {
             } else {
                 System.out.println("Error al enviar el archivo");
             }
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            esperar(500);
         } catch (IOException e) {
             System.out.println("Error al enviar el archivo");
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException ex) {
-                throw new RuntimeException(ex);
-            }
+            esperar(500);
         }
     }
 
@@ -381,18 +364,10 @@ public class ClientWhatsCopernic {
             } else {
                 System.out.println("Error al enviar el archivo");
             }
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            esperar(500);
         } catch (IOException e) {
             System.out.println("Error al enviar el archivo");
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException ex) {
-                throw new RuntimeException(ex);
-            }
+            esperar(500);
         }
     }
 
@@ -409,11 +384,7 @@ public class ClientWhatsCopernic {
                         System.out.println(archivo);
                     }
                 }
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                esperar(2000);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -470,7 +441,7 @@ public class ClientWhatsCopernic {
             String response = in.readUTF();
             if (response.equals("true")) {
                 System.out.println("Grupo creado con éxito");
-                esperar(2000);
+                esperar(500);
             } else {
                 System.out.println("Error al crear el grupo");
             }
@@ -528,13 +499,13 @@ public class ClientWhatsCopernic {
                 sc.nextLine();
                 switch (opcion) {
                     case 1:
-                        agregarUsuarioGrupo();
+                        agregarUsuarioGrupo(nombreGrupo);
                         break;
                     case 2:
-                        eliminarUsuarioGrupo();
+                        eliminarUsuarioGrupo(nombreGrupo);
                         break;
                     case 3:
-                        darQuitarPermisos();
+                        darQuitarPermisos(nombreGrupo);
                         break;
                     default:
                         System.out.println("Opción inválida");
@@ -556,17 +527,15 @@ public class ClientWhatsCopernic {
             return response.equals("true");
         } catch (Exception e) {
             System.out.println("Error al verificar si es admin");
-            esperar(2000);
+            esperar(500);
             return false;
         }
     }
 
-    private static void agregarUsuarioGrupo() {
+    private static void agregarUsuarioGrupo(String nombreGrupo) {
         try {
             System.out.print("Nombre del usuario: ");
             String nombreUsuario = sc.nextLine();
-            System.out.print("Nombre del grupo: ");
-            String nombreGrupo = sc.nextLine();
             out.writeUTF("agregarusuario " + nombreUsuario + " " + nombreGrupo);
             String response = in.readUTF();
             if (response.equals("true")) {
@@ -574,18 +543,16 @@ public class ClientWhatsCopernic {
             } else {
                 System.out.println("Error al agregar el usuario");
             }
-            esperar(2000);
+            esperar(500);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static void eliminarUsuarioGrupo() {
+    private static void eliminarUsuarioGrupo(String nombreGrupo) {
         try {
             System.out.print("Nombre del usuario: ");
             String nombreUsuario = sc.nextLine();
-            System.out.print("Nombre del grupo: ");
-            String nombreGrupo = sc.nextLine();
             out.writeUTF("eliminarusuario " + nombreUsuario + " " + nombreGrupo);
             String response = in.readUTF();
             if (response.equals("true")) {
@@ -593,36 +560,40 @@ public class ClientWhatsCopernic {
             } else {
                 System.out.println("Error al eliminar el usuario");
             }
-            esperar(2000);
+            esperar(500);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static void darQuitarPermisos() {
+    private static void darQuitarPermisos(String nombreGrupo) {
         try {
             System.out.print("Nombre del usuario: ");
             String nombreUsuario = sc.nextLine();
-            System.out.print("Nombre del grupo: ");
-            String nombreGrupo = sc.nextLine();
             System.out.println("1. Dar permisos");
             System.out.println("2. Quitar permisos");
             int opcion = verificarInput(sc);
             sc.nextLine();
             if (opcion == 1) {
                 out.writeUTF("darpermisos " + nombreUsuario + " " + nombreGrupo);
+                String response = in.readUTF();
+                if (response.equals("true")) {
+                    System.out.println("Permisos concedido con éxito");
+                } else {
+                    System.out.println("Error al modificar los permisos");
+                }
             } else if (opcion == 2) {
                 out.writeUTF("quitarpermisos " + nombreUsuario + " " + nombreGrupo);
+                String response = in.readUTF();
+                if (response.equals("true")) {
+                    System.out.println("Permisos quitados con éxito");
+                } else {
+                    System.out.println("Error al modificar los permisos");
+                }
             } else {
                 System.out.println("Opción inválida");
             }
-            String response = in.readUTF();
-            if (response.equals("true")) {
-                System.out.println("Permisos modificados con éxito");
-            } else {
-                System.out.println("Error al modificar los permisos");
-            }
-            esperar(2000);
+            esperar(500);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -639,7 +610,7 @@ public class ClientWhatsCopernic {
             } else {
                 System.out.println(response);
             }
-            esperar(2000);
+            esperar(500);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -657,17 +628,14 @@ public class ClientWhatsCopernic {
 
     public static int verificarInput(Scanner sc) {
         System.out.print("Elije una opción: ");
-        int opcion;
-        while (true) {
-            if (sc.hasNextInt()) {
-                opcion = sc.nextInt();
-                break;
-            } else {
-                System.out.print("Opción no válida. \nElije una opción:  ");
-                sc.nextLine();
-            }
+        // El programa pide un int pero si se ingresa un String, se captura la excepción y se vuelve a pedir el input
+        try {
+            return sc.nextInt();
+        } catch (Exception e) {
+            System.out.println("Opción inválida");
+            sc.nextLine();
+            return verificarInput(sc);
         }
-        return opcion;
     }
 
     public static void esperar(int tiempo) {

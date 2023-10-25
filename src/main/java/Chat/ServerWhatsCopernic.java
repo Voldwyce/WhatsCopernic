@@ -403,14 +403,15 @@ public class ServerWhatsCopernic {
                             break;
 
                         case "recibirarchivo":
-                            if (partes.length != 2) {
+                            if (partes.length > 2) {
                                 out.writeUTF("Comando incorrecto");
                             } else {
                                 String archivoSolicitado = partes[1];
                                 if (recibirArchivo(clientId, archivoSolicitado, out, clients)) {
                                     System.out.println("Archivo enviado con éxito");
                                 } else {
-                                    System.out.println("Error al enviar el archivo");
+                                    System.out.println("Error al recibir el archivo");
+                                    out.writeUTF("Archivo no encontrado");
                                 }
                             }
                             break;
@@ -436,7 +437,7 @@ public class ServerWhatsCopernic {
             try {
                 String query = "SELECT * FROM usuarios WHERE username = ? AND pswd = ?";
                 PreparedStatement preparedStatement = cn.prepareStatement(query);
-                preparedStatement.setString(1, usuario);
+                preparedStatement.setString(1, usuario.toLowerCase());
                 preparedStatement.setString(2, pwd);
                 ResultSet result = preparedStatement.executeQuery();
 
@@ -476,15 +477,19 @@ public class ServerWhatsCopernic {
             try {
                 int idRemitente = obtenerIdUsuarioDesdeDB(clients.get(remitenteId), cn);
                 int idDestinatario = obtenerIdUsuarioDesdeDB(destinoUsuario, cn);
+                if(idRemitente >= 0 && idDestinatario >= 0){
+                    String insertSql = "INSERT INTO mensajes (id_usuario_in, mensaje, id_usuario_out) VALUES (?, ?, ?)";
+                    PreparedStatement insertStatement = cn.prepareStatement(insertSql);
+                    insertStatement.setInt(1, idRemitente);
+                    insertStatement.setString(2, mensaje);
+                    insertStatement.setInt(3, idDestinatario);
 
-                String insertSql = "INSERT INTO mensajes (id_usuario_in, mensaje, id_usuario_out) VALUES (?, ?, ?)";
-                PreparedStatement insertStatement = cn.prepareStatement(insertSql);
-                insertStatement.setInt(1, idRemitente);
-                insertStatement.setString(2, mensaje);
-                insertStatement.setInt(3, idDestinatario);
-
-                int rowCount = insertStatement.executeUpdate();
-                return rowCount > 0;
+                    int rowCount = insertStatement.executeUpdate();
+                    return rowCount > 0;
+                }
+                else{
+                    return false;
+                }
             } catch (SQLException e) {
                 System.out.println("Error al enviar el mensaje");
                 e.printStackTrace();
@@ -495,36 +500,25 @@ public class ServerWhatsCopernic {
         public synchronized static boolean enviarMensajeGrupo(int remitenteId, String destinoGrupo, String mensaje, HashMap<Integer, String> clients) {
             try {
                 int idRemitente = obtenerIdUsuarioDesdeDB(clients.get(remitenteId), cn);
-                String verificacionQuery = "SELECT id_grupo FROM grupos WHERE grp_nombre = ?";
-                PreparedStatement verificacionStatement = cn.prepareStatement(verificacionQuery);
-                verificacionStatement.setString(1, destinoGrupo);
-                ResultSet verificacionResult = verificacionStatement.executeQuery();
+                int idGrupo = obtenerIdGrupoDesdeDB(destinoGrupo, cn);
 
-                if (verificacionResult.next()) {
-                    int idGrupoDestinatario = verificacionResult.getInt("id_grupo");
+                String pertenenciaQuery = "SELECT COUNT(*) FROM grp_usuarios WHERE id_usuario = ? AND id_grupo = ?";
+                PreparedStatement pertenenciaStatement = cn.prepareStatement(pertenenciaQuery);
+                pertenenciaStatement.setInt(1, idRemitente);
+                pertenenciaStatement.setInt(2, idGrupo);
+                ResultSet pertenenciaResult = pertenenciaStatement.executeQuery();
 
-                    String pertenenciaQuery = "SELECT COUNT(*) FROM grp_usuarios WHERE id_usuario = ? AND id_grupo = ?";
-                    PreparedStatement pertenenciaStatement = cn.prepareStatement(pertenenciaQuery);
-                    pertenenciaStatement.setInt(1, idRemitente);
-                    pertenenciaStatement.setInt(2, idGrupoDestinatario);
-                    ResultSet pertenenciaResult = pertenenciaStatement.executeQuery();
+                if (pertenenciaResult.next() && pertenenciaResult.getInt(1) == 1) {
+                    // El remitente pertenece al grupo, ahora puedes insertar el mensaje
+                    String insertSql = "INSERT INTO mensajes (id_usuario_in, mensaje, id_grupo) VALUES (?, ?, ?)";
+                    PreparedStatement insertStatement = cn.prepareStatement(insertSql);
+                    insertStatement.setInt(1, idRemitente);
+                    insertStatement.setString(2, mensaje);
+                    insertStatement.setInt(3, idGrupo);
 
-                    if (pertenenciaResult.next() && pertenenciaResult.getInt(1) == 1) {
-                        // El remitente pertenece al grupo, ahora puedes insertar el mensaje
-                        String insertSql = "INSERT INTO mensajes (id_usuario_in, mensaje, id_grupo) VALUES (?, ?, ?)";
-                        PreparedStatement insertStatement = cn.prepareStatement(insertSql);
-                        insertStatement.setInt(1, idRemitente);
-                        insertStatement.setString(2, mensaje);
-                        insertStatement.setInt(3, idGrupoDestinatario);
-
-                        int rowCount = insertStatement.executeUpdate();
-                        return rowCount > 0;
-                    } else {
-                        // El remitente no pertenece al grupo
-                        return false;
-                    }
+                    int rowCount = insertStatement.executeUpdate();
+                    return rowCount > 0;
                 } else {
-                    // El grupo destino no existe
                     return false;
                 }
             } catch (SQLException e) {
@@ -980,6 +974,7 @@ public class ServerWhatsCopernic {
             return false;
         }
     }
+
     public synchronized static String listarArchivos(int clientID, HashMap<Integer, String> clients) {
         try {
             int idUsuario = obtenerIdUsuarioDesdeDB(clients.get(clientID), cn);
@@ -1009,7 +1004,35 @@ public class ServerWhatsCopernic {
                 String usuario = resultSet2.getString("username");
                 archivos.append(nombreArchivo).append(" (").append(usuario).append(")\n");
             }
+
+            // Listar los archivos que tengan un permiso 0
+
+            String query3 = "SELECT nombre_archivo, username FROM archivos INNER JOIN usuarios ON archivos.id_usuario_in = usuarios.id_usuario WHERE permisos = 0";
+            PreparedStatement preparedStatement3 = cn.prepareStatement(query3);
+            ResultSet resultSet3 = preparedStatement3.executeQuery();
+
+            while (resultSet3.next()) {
+                String nombreArchivo = resultSet3.getString("nombre_archivo");
+                String usuario = resultSet3.getString("username");
+                archivos.append(nombreArchivo).append(" (").append(usuario).append(")\n");
+            }
+
+            // Listar los archivos que tengan un permiso 4, si pertenezemos al grupo
+            String query4 = "SELECT nombre_archivo, grp_nombre, username FROM archivos INNER JOIN usuarios ON archivos.id_usuario_in = usuarios.id_usuario INNER JOIN grupos ON archivos.id_grupo = grupos.id_grupo WHERE permisos = 4 AND archivos.id_grupo IN (SELECT id_grupo FROM grp_usuarios WHERE id_usuario = ?)";
+            PreparedStatement preparedStatement4 = cn.prepareStatement(query4);
+            preparedStatement4.setInt(1, idUsuario);
+            ResultSet resultSet4 = preparedStatement4.executeQuery();
+
+            while (resultSet4.next()) {
+                String nombreArchivo = resultSet4.getString("nombre_archivo");
+                String grupo = resultSet4.getString("grp_nombre");
+                String usuario = resultSet4.getString("username");
+                archivos.append(nombreArchivo).append(" (").append(usuario).append(" en ").append(grupo).append(")\n");
+            }
+
+            // Resultado de las 4 consultas
             return archivos.toString();
+
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -1038,17 +1061,17 @@ public class ServerWhatsCopernic {
             Path destinoPath = Paths.get(rutaServidor);
             Files.copy(origenPath, destinoPath, StandardCopyOption.REPLACE_EXISTING);
 
-                String insertSql = "INSERT INTO archivos (id_usuario_in, ruta_archivo, nombre_archivo, permisos) VALUES (?, ?, ?, ?)";
-                PreparedStatement insertStatement = cn.prepareStatement(insertSql);
-                insertStatement.setInt(1, idUsuario);
-                insertStatement.setString(2, rutaServidor);
-                insertStatement.setString(3, nombreArchivo);
-                insertStatement.setInt(4, 0);
+            String insertSql = "INSERT INTO archivos (id_usuario_in, ruta_archivo, nombre_archivo, permisos) VALUES (?, ?, ?, ?)";
+            PreparedStatement insertStatement = cn.prepareStatement(insertSql);
+            insertStatement.setInt(1, idUsuario);
+            insertStatement.setString(2, rutaServidor);
+            insertStatement.setString(3, nombreArchivo);
+            insertStatement.setInt(4, 0);
 
-                int rowCount = insertStatement.executeUpdate();
-                if (rowCount <= 0) {
-                    return false;
-                }
+            int rowCount = insertStatement.executeUpdate();
+            if (rowCount <= 0) {
+                return false;
+            }
 
             return true;
         } catch (SQLException | IOException e) {
@@ -1065,7 +1088,7 @@ public class ServerWhatsCopernic {
             ResultSet resultSet = preparedStatement.executeQuery();
 
             // Divide la ruta completa para obtener el nombre del archivo
-            String[] rutaPartes = archivo.split("\\\\");
+            String[] rutaPartes = archivo.split("/");
             String nombreArchivo = rutaPartes[rutaPartes.length - 1];
 
             // Nombre archivo = current mili time
@@ -1113,7 +1136,7 @@ public class ServerWhatsCopernic {
                 int idGrupo = resultSet.getInt("id_grupo");
 
                 // Divide la ruta completa para obtener el nombre del archivo
-                String[] rutaPartes = archivo.split("//");
+                String[] rutaPartes = archivo.split("/");
                 String nombreArchivo = rutaPartes[rutaPartes.length - 1];
 
                 // Nombre archivo = current mili time
@@ -1147,6 +1170,7 @@ public class ServerWhatsCopernic {
             return false;
         }
     }
+
     //descargar archivo por nombre
     public synchronized static boolean recibirArchivo(int clientID, String archivo, DataOutputStream out, HashMap<Integer, String> clients) {
         String[] archivos = listarArchivos(clientID, clients).split("[\\s\\n]+");//regex
@@ -1154,34 +1178,40 @@ public class ServerWhatsCopernic {
             //descargar archivo si esta en el string archivos
             for (String archivo1 : archivos) {
                 if (archivo1.contains(archivo)) {
+                    // Consultamos la base de datos para obtener la ruta del archivo
                     String query = "SELECT ruta_archivo FROM archivos WHERE nombre_archivo = ? ";
                     PreparedStatement preparedStatement = cn.prepareStatement(query);
                     preparedStatement.setString(1, archivo);
                     ResultSet resultSet = preparedStatement.executeQuery();
 
                     if (resultSet.next()) {
+                        // Obtenemos la ruta del archivo
                         String rutaArchivo = resultSet.getString("ruta_archivo");
                         File file = new File(rutaArchivo);
                         if (file.exists()) {
+                            // Si el archivo existe, lo enviamos al cliente
                             out.writeUTF("Archivo");
                             out.writeUTF(archivo);
                             out.writeLong(file.length());
-
+                            // Creamos un FileInputStream para leer el archivo
                             FileInputStream fileIn = new FileInputStream(file);
+                            // Creamos un buffer para enviar el archivo en paquetes de 4096 bytes
                             byte[] buffer = new byte[4096];
                             int bytesRead;
-
+                            // Leemos el archivo y lo enviamos al cliente
                             while ((bytesRead = fileIn.read(buffer)) != -1) {
                                 out.write(buffer, 0, bytesRead);
                             }
 
                             fileIn.close();
-                            return true;
+                            return true; // Devolvemos verdadero si la operación fue exitosa
                         } else {
+                            // Si el archivo no existe, informamos al cliente
                             out.writeUTF("Archivo no encontrado");
                             return false;
                         }
                     } else {
+                        // Si no encontramos información en la base de datos, informamos al cliente
                         out.writeUTF("Archivo no encontrado");
                         return false;
                     }
