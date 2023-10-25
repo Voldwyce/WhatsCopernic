@@ -1178,34 +1178,40 @@ public class ServerWhatsCopernic {
             //descargar archivo si esta en el string archivos
             for (String archivo1 : archivos) {
                 if (archivo1.contains(archivo)) {
+                    // Consultamos la base de datos para obtener la ruta del archivo
                     String query = "SELECT ruta_archivo FROM archivos WHERE nombre_archivo = ? ";
                     PreparedStatement preparedStatement = cn.prepareStatement(query);
                     preparedStatement.setString(1, archivo);
                     ResultSet resultSet = preparedStatement.executeQuery();
 
                     if (resultSet.next()) {
+                        // Obtenemos la ruta del archivo
                         String rutaArchivo = resultSet.getString("ruta_archivo");
                         File file = new File(rutaArchivo);
                         if (file.exists()) {
+                            // Si el archivo existe, lo enviamos al cliente
                             out.writeUTF("Archivo");
                             out.writeUTF(archivo);
                             out.writeLong(file.length());
-
+                            // Creamos un FileInputStream para leer el archivo
                             FileInputStream fileIn = new FileInputStream(file);
+                            // Creamos un buffer para enviar el archivo en paquetes de 4096 bytes
                             byte[] buffer = new byte[4096];
                             int bytesRead;
-
+                            // Leemos el archivo y lo enviamos al cliente
                             while ((bytesRead = fileIn.read(buffer)) != -1) {
                                 out.write(buffer, 0, bytesRead);
                             }
 
                             fileIn.close();
-                            return true;
+                            return true; // Devolvemos verdadero si la operación fue exitosa
                         } else {
+                            // Si el archivo no existe, informamos al cliente
                             out.writeUTF("Archivo no encontrado");
                             return false;
                         }
                     } else {
+                        // Si no encontramos información en la base de datos, informamos al cliente
                         out.writeUTF("Archivo no encontrado");
                         return false;
                     }
