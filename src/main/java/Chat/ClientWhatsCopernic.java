@@ -271,10 +271,9 @@ public class ClientWhatsCopernic {
         }
     }
 
-
     private static void enviarArchivoUsuario() {
         try {
-            System.out.println("Enviar a: ");
+            System.out.print("Enviar a: ");
             System.out.println("0. Todo el mundo");
             System.out.println("1. Solo un usuario");
             int permisos = verificarInput(sc);
@@ -305,6 +304,8 @@ public class ClientWhatsCopernic {
                     System.out.println("El archivo es demasiado grande");
                     return;
                 }
+
+                // Código para enviar el archivo al usuario
                 out.writeUTF("enviararchivousuario " + nombreUsuario + " " + rutaArchivo + " " + permisos);
                 String response = in.readUTF();
                 if (response.equals("true")) {
@@ -333,6 +334,8 @@ public class ClientWhatsCopernic {
                 System.out.println("El archivo es demasiado grande");
                 return;
             }
+
+            // Código para enviar el archivo al grupo
             out.writeUTF("enviararchivogrupo " + nombreGrupo + " " + rutaArchivo);
             String response = in.readUTF();
             if (response.equals("true")) {
@@ -348,7 +351,7 @@ public class ClientWhatsCopernic {
     }
 
     private static void enviarArchivoAGrupos() {
-        // Enviar archivo a todos los grupos
+        // Código para enviar el archivo a todos los grupos
         try {
             System.out.print("Ruta del archivo: ");
             String rutaArchivo = sc.nextLine();
@@ -357,6 +360,7 @@ public class ClientWhatsCopernic {
                 System.out.println("El archivo es demasiado grande");
                 return;
             }
+
             out.writeUTF("enviararchivoagrupos " + rutaArchivo + " " + 3);
             String response = in.readUTF();
             if (response.equals("true")) {
@@ -370,6 +374,7 @@ public class ClientWhatsCopernic {
             esperar(500);
         }
     }
+
 
     public static void listarArchivos() {
         try {
