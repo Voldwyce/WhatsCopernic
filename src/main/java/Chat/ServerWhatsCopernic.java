@@ -334,8 +334,7 @@ public class ServerWhatsCopernic {
                             } else {
                                 String nombreDestinatario = partes[1];
                                 String archivo = partes[2];
-                                int permisos = Integer.parseInt(partes[3]);
-                                boolean enviado = enviarArchivoUsuario(clientId, nombreDestinatario, archivo, permisos, clients);
+                                boolean enviado = enviarArchivoUsuario(clientId, nombreDestinatario, archivo, clients);
                                 if (enviado) {
                                     System.out.println("Archivo enviado con éxito");
                                     out.writeUTF("true"); // Archivo enviado con éxito
@@ -350,8 +349,7 @@ public class ServerWhatsCopernic {
                                 out.writeUTF("Comando incorrecto");
                             } else {
                                 String archivo = partes[1];
-                                int permisos = Integer.parseInt(partes[2]);
-                                boolean enviado = enviarArchivoTodos(clientId, archivo, permisos, clients);
+                                boolean enviado = enviarArchivoTodos(clientId, archivo, clients);
                                 if (enviado) {
                                     System.out.println("Archivo enviado con éxito");
                                     out.writeUTF("true"); // Archivo enviado con éxito
@@ -603,7 +601,7 @@ public class ServerWhatsCopernic {
         }
     }
 
-    public synchronized static boolean enviarArchivoTodos(int clientId, String archivo, int permisos, HashMap<Integer, String> clients) {
+    public synchronized static boolean enviarArchivoTodos(int clientId, String archivo, HashMap<Integer, String> clients) {
         int idUsuario = obtenerIdUsuarioDesdeDB(clients.get(clientId), cn);
         try {
             // Divide la ruta completa para obtener el nombre del archivo
@@ -631,18 +629,14 @@ public class ServerWhatsCopernic {
             insertStatement.setInt(4, 0);
 
             int rowCount = insertStatement.executeUpdate();
-            if (rowCount <= 0) {
-                return false;
-            }
-
-            return true;
+            return rowCount > 0;
         } catch (SQLException | IOException e) {
             e.printStackTrace();
             return false;
         }
     }
 
-    public synchronized static boolean enviarArchivoUsuario(int clientID, String destinoUsuario, String rutaArchivoCompleta, int permisos, HashMap<Integer, String> clients) {
+    public synchronized static boolean enviarArchivoUsuario(int clientID, String destinoUsuario, String rutaArchivoCompleta, HashMap<Integer, String> clients) {
         int idUsuario = obtenerIdUsuarioDesdeDB(clients.get(clientID), cn);
         try {
             String query = "SELECT id_usuario FROM usuarios WHERE username = ?";
