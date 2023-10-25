@@ -273,7 +273,7 @@ public class ClientWhatsCopernic {
 
     private static void enviarArchivoUsuario() {
         try {
-            System.out.print("Enviar a: ");
+            System.out.println("Enviar a: ");
             System.out.println("0. Todo el mundo");
             System.out.println("1. Solo un usuario");
             int permisos = verificarInput(sc);
